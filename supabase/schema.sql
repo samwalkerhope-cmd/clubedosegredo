@@ -115,6 +115,30 @@ create policy "presentes admin" on storage.objects for all to authenticated
   using (bucket_id = 'presentes' and public.eh_admin())
   with check (bucket_id = 'presentes' and public.eh_admin());
 
+-- ---------------------------------------------------------------- evolução (diário com peso, humor e foto)
+-- Um registro por dia para cada pessoa. A tabela "checkins" acima é da versão antiga e não é mais usada pelo app.
+create table if not exists public.diario (
+  user_id uuid not null references auth.users on delete cascade,
+  dia int not null check (dia between 1 and 21),
+  peso numeric(5,1),
+  humor text check (humor in ('mal', 'normal', 'bem')),
+  foto text,
+  atualizado_em timestamptz not null default now(),
+  primary key (user_id, dia)
+);
+alter table public.diario enable row level security;
+grant select, insert, update, delete on public.diario to authenticated;
+drop policy if exists "diario proprio" on public.diario;
+create policy "diario proprio" on public.diario for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Fotos da evolução: bucket privado, uma pasta por pessoa. Só a dona da pasta lê e grava.
+insert into storage.buckets (id, name, public) values ('fotos', 'fotos', false)
+  on conflict (id) do update set public = false;
+drop policy if exists "fotos proprias" on storage.objects;
+create policy "fotos proprias" on storage.objects for all to authenticated
+  using (bucket_id = 'fotos' and (storage.foldername(name))[1] = auth.uid()::text)
+  with check (bucket_id = 'fotos' and (storage.foldername(name))[1] = auth.uid()::text);
+
 -- ---------------------------------------------------------------- primeira administradora
 -- 1) Libere o seu próprio telefone (troque pelo seu número, só dígitos, com DDD):
 --      insert into public.acessos (telefone, nome) values ('85999999999', 'Seu nome');

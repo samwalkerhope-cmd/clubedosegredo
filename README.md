@@ -1,6 +1,6 @@
 # Clube — nova versão (azul e dourado)
 
-App de membros com login por telefone, jornada de 21 dias com progresso, registro de evolução (peso), área de presentes e perfil. Feito com React, Vite, Tailwind e Supabase.
+App de membros com login por telefone, jornada de 21 dias com progresso, registro de evolução dia a dia (peso, foto e humor), área de presentes e perfil. Feito com React, Vite, Tailwind e Supabase.
 
 ## 1. Rodar no computador
 
@@ -89,5 +89,4 @@ Ao mudar um texto ou uma tela, lembre de fazer a mesma mudança no arquivo do ou
 
 - Recuperação de senha (o login por telefone não tem e-mail real). Por enquanto, quem esquecer a senha precisa que você redefina no painel do Supabase, em Authentication > Users.
 - Liberação automática ligada ao checkout: hoje você libera cada telefone pelo painel depois da compra.
-- Fotos na evolução (hoje só peso e anotação).
 - Envio de avisos para as usuárias.

@@ -3,6 +3,7 @@ import { HashRouter, Routes, Route, Navigate, NavLink, Link, Outlet, useNavigate
 import { Crown, Map, Gift, LineChart, User, Check, ChevronLeft, ChevronRight, ChevronDown, MessageCircle, LogOut, FileText, Trash2, ShoppingBasket, ShieldCheck, ChefHat, Clock, Sparkles, Flame, LifeBuoy } from 'lucide-react'
 import { APP, DIAS, SEMANAS, SEGREDOS, PRESENTES, LISTA_COMPRAS, RECEITAS, CATEGORIAS, RITUAIS, PROTOCOLOS, RECEITA_DO_DIA } from './content'
 import * as store from './store'
+import Evolucao from './Evolucao'
 
 const iniciais = APP.nome.split(/\s+/).filter((p) => p.length > 2).slice(0, 2).map((p) => p[0].toUpperCase()).join('') || 'C'
 
@@ -707,81 +708,6 @@ function Compras() {
   )
 }
 
-// ------------------------------------------------------------------ Evolução
-function Grafico({ dados }) {
-  if (dados.length < 2) return <p className="py-6 text-center text-sm text-azul-700">Registre pelo menos dois pesos para ver o gráfico.</p>
-  const L = 320, A = 140, m = 16
-  const pesos = dados.map((d) => Number(d.peso))
-  const min = Math.min(...pesos), max = Math.max(...pesos), faixa = max - min || 1
-  const pt = (p, i) => [m + (i * (L - 2 * m)) / (pesos.length - 1), A - m - ((p - min) * (A - 2 * m)) / faixa]
-  const pontos = pesos.map(pt)
-  return (
-    <svg viewBox={`0 0 ${L} ${A}`} className="w-full" role="img" aria-label={`Peso de ${pesos[0]} kg para ${pesos.at(-1)} kg`}>
-      <polyline fill="none" stroke="#12305a" strokeWidth="2.5" strokeLinejoin="round" points={pontos.map((p) => p.join(',')).join(' ')} />
-      {pontos.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="4" fill="#c9a24d" stroke="#fff" strokeWidth="1.5" />)}
-    </svg>
-  )
-}
-
-function Evolucao({ usuario }) {
-  const [lista, setLista] = useState([])
-  const [peso, setPeso] = useState('')
-  const [nota, setNota] = useState('')
-  const [erro, setErro] = useState('')
-
-  const carregar = () => store.registros(usuario).then(setLista).catch((e) => setErro(e.message))
-  useEffect(() => { carregar() }, [])
-
-  async function salvar(e) {
-    e.preventDefault()
-    setErro('')
-    try {
-      await store.novoRegistro(usuario, String(peso).replace(',', '.'), nota)
-      setPeso(''); setNota('')
-      await carregar()
-    } catch (err) { setErro(err.message) }
-  }
-
-  async function apagar(id) {
-    try { await store.apagarRegistro(usuario, id); await carregar() } catch (err) { setErro(err.message) }
-  }
-
-  const diferenca = lista.length > 1 ? (Number(lista.at(-1).peso) - Number(lista[0].peso)).toFixed(1) : null
-
-  return (
-    <div className="space-y-5">
-      <div>
-        <p className="sobretitulo">Minha evolução</p>
-        <h1 className="titulo">Acompanhe seu progresso</h1>
-      </div>
-      <section className="card p-5">
-        <Grafico dados={lista} />
-        {diferenca !== null && <p className="mt-2 text-center text-sm font-semibold">{Number(diferenca) > 0 ? '+' : ''}{diferenca.replace('.', ',')} kg desde o primeiro registro</p>}
-      </section>
-      <form onSubmit={salvar} className="card space-y-3 p-5">
-        <h2 className="font-semibold">Novo registro</h2>
-        <input className="campo" inputMode="decimal" placeholder="Peso em kg (ex.: 68,5)" value={peso} onChange={(e) => setPeso(e.target.value)} />
-        <input className="campo" placeholder="Como você está se sentindo? (opcional)" value={nota} onChange={(e) => setNota(e.target.value)} />
-        <Erro>{erro}</Erro>
-        <button className="btn-azul w-full">Salvar registro</button>
-      </form>
-      {lista.length > 0 && (
-        <ul className="card divide-y divide-azul-100">
-          {[...lista].reverse().map((r) => (
-            <li key={r.id} className="flex items-center gap-3 px-5 py-3 text-sm">
-              <div className="flex-1">
-                <p className="font-semibold">{String(r.peso).replace('.', ',')} kg <span className="font-normal text-azul-700">· {new Date(r.criado_em).toLocaleDateString('pt-BR')}</span></p>
-                {r.nota && <p className="text-azul-700">{r.nota}</p>}
-              </div>
-              <button aria-label="Apagar registro" className="p-2 text-azul-700/60 hover:text-red-600" onClick={() => apagar(r.id)}><Trash2 size={16} /></button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  )
-}
-
 // ------------------------------------------------------------------ Presentes
 function Presentes() {
   const [erro, setErro] = useState('')
@@ -1037,7 +963,7 @@ export default function App() {
           <Route path="/rituais" element={<Rituais />} />
           <Route path="/rituais/:id" element={<Ritual />} />
           <Route path="/admin" element={<Admin usuario={usuario} />} />
-          <Route path="/evolucao" element={<Evolucao usuario={usuario} />} />
+          <Route path="/evolucao" element={<Evolucao usuario={usuario} total={DIAS.length} nomeApp={APP.nome} />} />
           <Route path="/presentes" element={<Presentes />} />
           <Route path="/perfil" element={<Perfil usuario={usuario} aoAtualizar={setUsuario} aoSair={sair} />} />
           <Route path="*" element={<Navigate to="/" replace />} />

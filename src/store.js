@@ -22,7 +22,7 @@ const ES = {
   'Não foi possível carregar seu progresso.': 'No se pudo cargar tu progreso.',
   'Não foi possível salvar o dia.': 'No se pudo guardar el día.',
   'Não foi possível carregar seus registros.': 'No se pudieron cargar tus registros.',
-  'Informe um peso válido.': 'Ingresa un peso válido.',
+  'Não foi possível enviar a foto.': 'No se pudo enviar la foto.',
   'Não foi possível salvar o registro.': 'No se pudo guardar el registro.',
   'Não foi possível apagar.': 'No se pudo borrar.',
   'Não foi possível abrir este material. Tente de novo ou fale com o suporte.': 'No se pudo abrir este material. Inténtalo de nuevo o contacta a soporte.',
@@ -142,28 +142,56 @@ export async function marcarDia(usuario, dia, concluido) {
   if (error) throw new Error(msg('Não foi possível salvar o dia.'))
 }
 
-// ---- evolução (registros de peso) ----
-export async function registros(usuario) {
-  if (DEMO) return local.get('clube.registros', [])
-  const { data, error } = await sb.from('checkins').select('id, peso, nota, criado_em').eq('user_id', usuario.id).order('criado_em')
+// ---- evolução (diário: um registro por dia, com peso, humor e foto) ----
+// As fotos ficam no bucket privado "fotos", em uma pasta por pessoa; só a dona consegue abrir.
+const caminhoFoto = (usuario, dia) => `${usuario.id}/dia-${dia}.jpg`
+const paraDataUrl = (blob) => new Promise((ok, falha) => {
+  const leitor = new FileReader()
+  leitor.onload = () => ok(leitor.result)
+  leitor.onerror = falha
+  leitor.readAsDataURL(blob)
+})
+
+export async function diario(usuario) {
+  if (DEMO) return local.get('clube.diario', []).map((r) => ({ ...r, fotoUrl: r.foto || '' }))
+  const { data, error } = await sb.from('diario').select('dia, peso, humor, foto, atualizado_em').eq('user_id', usuario.id).order('dia')
   if (error) throw new Error(msg('Não foi possível carregar seus registros.'))
-  return data
+  const comFoto = data.filter((r) => r.foto)
+  let links = {}
+  if (comFoto.length) {
+    const { data: assinados } = await sb.storage.from('fotos').createSignedUrls(comFoto.map((r) => r.foto), 3600)
+    for (const a of assinados || []) if (a.signedUrl) links[a.path] = a.signedUrl
+  }
+  // O sufixo muda quando a foto é trocada, para o navegador não mostrar a versão antiga.
+  return data.map((r) => ({ ...r, fotoUrl: links[r.foto] ? `${links[r.foto]}&v=${Date.parse(r.atualizado_em)}` : '' }))
 }
 
-export async function novoRegistro(usuario, peso, nota) {
-  const item = { peso: Number(peso), nota: nota.trim(), criado_em: new Date().toISOString() }
-  if (!(item.peso > 0)) throw new Error(msg('Informe um peso válido.'))
+export async function salvarDiario(usuario, dia, { peso, humor, arquivo, removerFoto }) {
   if (DEMO) {
-    local.set('clube.registros', [...local.get('clube.registros', []), { id: String(Date.now()), ...item }])
+    const atual = local.get('clube.diario', [])
+    const antigo = atual.find((r) => r.dia === dia)
+    const foto = arquivo ? await paraDataUrl(arquivo) : removerFoto ? null : antigo?.foto || null
+    local.set('clube.diario', [...atual.filter((r) => r.dia !== dia), { dia, peso, humor, foto }].sort((a, b) => a.dia - b.dia))
     return
   }
-  const { error } = await sb.from('checkins').insert({ user_id: usuario.id, ...item })
+  const caminho = caminhoFoto(usuario, dia)
+  const item = { user_id: usuario.id, dia, peso, humor, atualizado_em: new Date().toISOString() }
+  if (arquivo) {
+    const { error } = await sb.storage.from('fotos').upload(caminho, arquivo, { upsert: true, contentType: 'image/jpeg' })
+    if (error) throw new Error(msg('Não foi possível enviar a foto.'))
+    item.foto = caminho
+  } else if (removerFoto) {
+    await sb.storage.from('fotos').remove([caminho])
+    item.foto = null
+  }
+  const { error } = await sb.from('diario').upsert(item)
   if (error) throw new Error(msg('Não foi possível salvar o registro.'))
 }
 
-export async function apagarRegistro(usuario, id) {
-  if (DEMO) return local.set('clube.registros', local.get('clube.registros', []).filter((r) => r.id !== id))
-  const { error } = await sb.from('checkins').delete().eq('id', id).eq('user_id', usuario.id)
+export async function apagarDiario(usuario, dia) {
+  if (DEMO) return local.set('clube.diario', local.get('clube.diario', []).filter((r) => r.dia !== dia))
+  await sb.storage.from('fotos').remove([caminhoFoto(usuario, dia)])
+  const { error } = await sb.from('diario').delete().eq('user_id', usuario.id).eq('dia', dia)
   if (error) throw new Error(msg('Não foi possível apagar.'))
 }
 
