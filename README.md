@@ -68,6 +68,17 @@ git push -u origin main
 
 Na Vercel: **Add New > Project**, escolha o repositório, mantenha o preset **Vite** e cadastre em **Environment Variables** as mesmas variáveis do `.env`. Depois clique em **Deploy**.
 
+## Site em espanhol (Club del Secreto)
+
+O mesmo projeto gera dois sites. O idioma é escolhido pela variável `VITE_IDIOMA` de cada projeto na Vercel:
+
+- **Português:** sem a variável (ou vazia). Usa `src/App.jsx` e `src/content.js`.
+- **Espanhol:** `VITE_IDIOMA=es`. Usa `src/App.es.jsx` e `src/content.es.js`.
+
+Cada site tem o seu próprio projeto no Supabase (clientes, acessos e PDFs separados), configurado pelas variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` do respectivo projeto na Vercel. Um único `git push` publica os dois.
+
+Ao mudar um texto ou uma tela, lembre de fazer a mesma mudança no arquivo do outro idioma. As mensagens de erro em espanhol ficam no início de `src/store.js`. Os PDFs em espanhol ficam no bucket `presentes` do Supabase do site em espanhol.
+
 ## Outros recursos
 
 - **Receitas:** ficam em `RECEITAS`, no `src/content.js`, separadas por `CATEGORIAS`. Em `RECEITA_DO_DIA` você escolhe qual receita aparece como sugestão em cada dia.
