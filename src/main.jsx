@@ -14,10 +14,20 @@ if (espanhol) {
 
 const carregar = espanhol ? import('./App.es.jsx') : import('./App.jsx')
 
-carregar.then(({ default: App }) => {
-  createRoot(document.getElementById('root')).render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>,
-  )
-})
+carregar
+  .then(({ default: App }) => {
+    sessionStorage.removeItem('clube.recarregou')
+    createRoot(document.getElementById('root')).render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>,
+    )
+  })
+  .catch(() => {
+    // Acontece quando uma versão nova foi publicada enquanto o app estava aberto:
+    // os arquivos da versão antiga deixam de existir. Recarrega uma vez para pegar a nova.
+    if (!sessionStorage.getItem('clube.recarregou')) {
+      sessionStorage.setItem('clube.recarregou', '1')
+      window.location.reload()
+    }
+  })
