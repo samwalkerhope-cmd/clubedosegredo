@@ -143,6 +143,16 @@ export async function apagarRegistro(usuario, id) {
   if (error) throw new Error('Não foi possível apagar.')
 }
 
+// ---- presentes (PDFs protegidos no Supabase Storage, bucket "presentes") ----
+// Devolve um link temporário (5 minutos) para o PDF. Só funciona para quem está logada e com acesso liberado.
+export async function linkPresente(arquivo) {
+  if (DEMO) return arquivo // no modo demonstração abre o arquivo local de public/presentes
+  const nome = String(arquivo).split('/').pop()
+  const { data, error } = await sb.storage.from('presentes').createSignedUrl(nome, 300)
+  if (error) throw new Error('Não foi possível abrir este material. Tente de novo ou fale com o suporte.')
+  return data.signedUrl
+}
+
 // ---- administração ----
 export async function acessos() {
   if (DEMO) return local.get('clube.acessos', [])

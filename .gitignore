@@ -4,3 +4,5 @@ dist-preview
 .env
 .env.local
 .vercel
+# PDFs dos presentes ficam no Supabase Storage, não no site
+public/presentes/*.pdf

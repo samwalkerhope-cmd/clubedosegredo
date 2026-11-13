@@ -784,6 +784,25 @@ function Evolucao({ usuario }) {
 
 // ------------------------------------------------------------------ Presentes
 function Presentes() {
+  const [erro, setErro] = useState('')
+  const [abrindo, setAbrindo] = useState('')
+
+  // Os PDFs ficam protegidos no Supabase: cada clique gera um link temporário para quem está logada.
+  async function abrir(p) {
+    setErro('')
+    setAbrindo(p.titulo)
+    const aba = window.open('', '_blank') // aberta já no clique para o navegador não bloquear
+    try {
+      const url = await store.linkPresente(p.arquivo)
+      if (aba) { aba.opener = null; aba.location.href = url } else window.location.href = url
+    } catch (e) {
+      if (aba) aba.close()
+      setErro(e.message)
+    } finally {
+      setAbrindo('')
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -822,6 +841,7 @@ function Presentes() {
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-azul-700">E-books em PDF para baixar</h2>
+        <Erro>{erro}</Erro>
         <ul className="space-y-3">
           {PRESENTES.map((p) => {
             const corpo = (
@@ -837,7 +857,7 @@ function Presentes() {
             return (
               <li key={p.titulo}>
                 {p.arquivo
-                  ? <a className="card flex items-center gap-4 p-4" href={p.arquivo} target="_blank" rel="noreferrer">{corpo}</a>
+                  ? <button type="button" className="card flex w-full items-center gap-4 p-4 text-left" disabled={abrindo === p.titulo} onClick={() => abrir(p)}>{corpo}</button>
                   : <div className="card flex items-center gap-4 p-4 opacity-70">{corpo}</div>}
               </li>
             )

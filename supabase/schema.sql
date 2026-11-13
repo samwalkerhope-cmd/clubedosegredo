@@ -94,6 +94,27 @@ create policy "registros proprios" on public.checkins for all using (auth.uid() 
 drop policy if exists "acessos admin" on public.acessos;
 create policy "acessos admin" on public.acessos for all using (public.eh_admin()) with check (public.eh_admin());
 
+-- ---------------------------------------------------------------- presentes (PDFs protegidos)
+-- Os PDFs ficam no Storage, em um bucket privado. Só abre quem está logada e com o telefone liberado.
+insert into storage.buckets (id, name, public) values ('presentes', 'presentes', false)
+  on conflict (id) do update set public = false;
+
+create or replace function public.tem_acesso() returns boolean
+language sql stable security definer set search_path = public as $$
+  select public.eh_admin() or exists (
+    select 1 from public.profiles p join public.acessos a on a.telefone = p.telefone where p.id = auth.uid()
+  )
+$$;
+
+drop policy if exists "presentes leitura" on storage.objects;
+create policy "presentes leitura" on storage.objects for select to authenticated
+  using (bucket_id = 'presentes' and public.tem_acesso());
+
+drop policy if exists "presentes admin" on storage.objects;
+create policy "presentes admin" on storage.objects for all to authenticated
+  using (bucket_id = 'presentes' and public.eh_admin())
+  with check (bucket_id = 'presentes' and public.eh_admin());
+
 -- ---------------------------------------------------------------- primeira administradora
 -- 1) Libere o seu próprio telefone (troque pelo seu número, só dígitos, com DDD):
 --      insert into public.acessos (telefone, nome) values ('85999999999', 'Seu nome');

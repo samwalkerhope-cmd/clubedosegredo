@@ -1,1 +1,3 @@
-Coloque aqui os PDFs dos presentes.
+Os PDFs dos presentes NAO ficam mais nesta pasta no site publicado.
+Envie os PDFs no Supabase, em Storage > presentes (bucket privado).
+Arquivos .pdf deixados aqui sao ignorados pelo Git e servem so de copia local.

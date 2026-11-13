@@ -19,7 +19,7 @@ Tudo fica em **`src/content.js`**:
 
 - `APP`: nome do app, frase da tela de entrada, nome do plano e número do WhatsApp.
 - `DIAS`: os 21 dias (título, resumo e blocos com itens). Hoje estão com texto de exemplo.
-- `PRESENTES`: materiais bônus. Coloque os PDFs em `public/presentes/` e escreva o caminho em `arquivo` (ex.: `/presentes/meu-material.pdf`).
+- `PRESENTES`: materiais bônus. Os PDFs ficam protegidos no Supabase, em **Storage > presentes** (bucket privado): envie o PDF para lá e escreva o nome do arquivo em `arquivo` (ex.: `/presentes/meu-material.pdf`). Só abre para quem está logada e com acesso liberado. Não coloque PDFs em `public/`, porque tudo que fica ali abre por link direto, sem login.
 
 O título da aba do navegador fica em `index.html` (`<title>`).
 
