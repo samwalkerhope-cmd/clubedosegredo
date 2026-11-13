@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { height: 100%; }
+body { @apply bg-creme text-azul-900 font-sans antialiased; }
+
+@layer components {
+  .card { @apply bg-white rounded-2xl shadow-card border border-azul-100; }
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-semibold transition active:scale-[.98] disabled:opacity-50; }
+  .btn-azul { @apply btn bg-azul-900 text-white border border-ouro-500 hover:bg-azul-800; }
+  .btn-ouro { @apply btn bg-gradient-to-br from-ouro-300 to-ouro-500 text-azul-950 hover:from-ouro-300 hover:to-ouro-600; }
+  .btn-linha { @apply btn bg-white text-azul-900 border border-azul-200 hover:bg-azul-100; }
+  .campo { @apply w-full rounded-xl border border-azul-200 bg-white px-4 py-3 outline-none focus:border-ouro-500 focus:ring-2 focus:ring-ouro-100; }
+  .sobretitulo { @apply text-xs font-semibold uppercase tracking-[.2em] text-ouro-600; }
+  .titulo { @apply font-serif text-3xl font-bold text-azul-900 leading-tight; }
+}
