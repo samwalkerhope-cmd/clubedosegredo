@@ -30,6 +30,8 @@ const ES = {
   'Não foi possível liberar o acesso.': 'No se pudo habilitar el acceso.',
   'Não foi possível remover o acesso.': 'No se pudo quitar el acceso.',
   'Não foi possível carregar os membros.': 'No se pudieron cargar los miembros.',
+  'As senhas não conferem.': 'Las contraseñas no coinciden.',
+  'Não foi possível alterar a senha.': 'No se pudo cambiar la contraseña.',
 }
 const msg = (texto) => (import.meta.env.VITE_IDIOMA === 'es' && ES[texto]) || texto
 
@@ -118,6 +120,14 @@ export async function salvarNome(usuario, nome) {
   if (error) throw new Error(msg('Não foi possível salvar.'))
   await sb.from('profiles').update({ nome: novo.nome }).eq('id', usuario.id)
   return novo
+}
+
+export async function alterarSenha(nova, confirma) {
+  if (!nova || nova.length < 6) throw new Error(msg('A senha precisa ter pelo menos 6 caracteres.'))
+  if (nova !== confirma) throw new Error(msg('As senhas não conferem.'))
+  if (DEMO) return
+  const { error } = await sb.auth.updateUser({ password: nova })
+  if (error) throw new Error(msg('Não foi possível alterar a senha.'))
 }
 
 // ---- progresso da jornada ----

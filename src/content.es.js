@@ -11,6 +11,63 @@ export const APP = {
   "whatsappRotulo": "Dra. del Secreto en WhatsApp"
 }
 
+// =====================================================================
+// ENLACES DE CHECKOUT Y OFERTAS (edita aquí los enlaces y precios)
+// =====================================================================
+export const OFERTAS = {
+  "whatsappDraUrl": "",
+  "salada": {
+    "checkoutUrl": "",
+    "preco": "R$ 19,90",
+    "cardTitulo": "Ensalada en frasco — 60 recetas",
+    "cardSubtitulo": "Adelgaza sin pasar hambre",
+    "badge": "Oferta exclusiva para ti",
+    "titulo": "Ensalada en Frasco",
+    "descricao": "60 recetas + 19 aderezos para adelgazar sin pasar hambre — listas para toda tu semana.",
+    "itens": [
+      "60 recetas de ensalada en frasco",
+      "19 aderezos que caben en la dieta",
+      "Guía: cómo armar y conservar toda la semana",
+      "Lo recibes en tu correo y por WhatsApp"
+    ],
+    "pagamentoRotulo": "Pago único",
+    "botao": "Quiero las recetas por R$ 19,90",
+    "fechar": "Ahora no"
+  },
+  "clube": {
+    "checkoutUrl": "",
+    "vslUrl": "/vsl.html",
+    "preco": "R$ 67",
+    "titulo": "Dra. del Secreto en WhatsApp",
+    "subtitulo": "El Secreto de la Insulina te muestra el camino; la Dra. del Secreto recorre ese camino contigo en WhatsApp.",
+    "avisoVideo": "Mira el video antes de decidir",
+    "beneficios": [
+      {
+        "titulo": "Protocolos para imprevistos",
+        "descricao": "Fiesta, viaje, SPM, pereza — listos para usar."
+      },
+      {
+        "titulo": "Dra. del Secreto particular en WhatsApp",
+        "descricao": "Acompañamiento cercano, nunca sola."
+      },
+      {
+        "titulo": "Mi Evolución",
+        "descricao": "Foto, peso y medidas, semana a semana."
+      }
+    ],
+    "acessoRotulo": "Acceso completo",
+    "pagamentoRotulo": "pago único",
+    "resumo": "Dra. del Secreto durante todos los 21 días + Protocolos y materiales para siempre.",
+    "garantia": "Garantía incondicional de 7 días",
+    "itens": [
+      "Activación inmediata después del pago",
+      "Sin mensualidades, sin sorpresas",
+      "Acceso con el mismo inicio de sesión"
+    ],
+    "botao": "Quiero tener a la Dra. del Secreto en mi WhatsApp"
+  }
+}
+
 export const SEMANAS = [
   {
     "numero": 1,
@@ -1355,6 +1412,7 @@ export const CATEGORIAS = [
 export const RECEITAS = [
   {
     "id": "receita-01",
+    "imagem": "/materiais/receita-01.jpg",
     "categoria": "Mañana y Al despertar",
     "tag": "🌅 Al despertar · 3 min",
     "titulo": "Agua de Berenjena con Limón",
@@ -1400,6 +1458,7 @@ export const RECEITAS = [
   },
   {
     "id": "receita-02",
+    "imagem": "/materiais/receita-02.jpg",
     "categoria": "Mañana y Al despertar",
     "tag": "🥕 Desayuno · 4 min",
     "titulo": "Smoothie de Zanahoria con Jengibre",
@@ -1446,6 +1505,7 @@ export const RECEITAS = [
   },
   {
     "id": "receita-03",
+    "imagem": "/materiais/receita-03.jpg",
     "categoria": "Mañana y Al despertar",
     "tag": "🍌 Desayuno · 5 min",
     "titulo": "Smoothie de Banana Verde",
@@ -1492,6 +1552,7 @@ export const RECEITAS = [
   },
   {
     "id": "receita-04",
+    "imagem": "/materiais/receita-04.jpg",
     "categoria": "Mañana y Al despertar",
     "tag": "❤️ A cualquier hora · 5 min",
     "titulo": "Jugo de Remolacha con Naranja",
@@ -1537,6 +1598,7 @@ export const RECEITAS = [
   },
   {
     "id": "receita-05",
+    "imagem": "/materiais/receita-05.jpg",
     "categoria": "Tarde y Saciedad",
     "tag": "☀️ Tarde · 3 min",
     "titulo": "Jugo de Sandía con Menta",
@@ -1581,6 +1643,7 @@ export const RECEITAS = [
   },
   {
     "id": "receita-06",
+    "imagem": "/materiais/receita-06.jpg",
     "categoria": "Mañana y Al despertar",
     "tag": "💧 Todo el día · 3 min",
     "titulo": "Agua de Pepino con Menta",
@@ -1626,6 +1689,7 @@ export const RECEITAS = [
   },
   {
     "id": "receita-07",
+    "imagem": "/materiais/receita-07.jpg",
     "categoria": "Mañana y Al despertar",
     "tag": "🌞 Mañana · 4 min",
     "titulo": "Jugo de Piña con Cúrcuma",
@@ -1672,6 +1736,7 @@ export const RECEITAS = [
   },
   {
     "id": "receita-08",
+    "imagem": "/materiais/receita-08.jpg",
     "categoria": "Mañana y Al despertar",
     "tag": "🍇 Merienda · 5 min",
     "titulo": "Jugo de Uva Morada con Canela",
@@ -1717,6 +1782,7 @@ export const RECEITAS = [
   },
   {
     "id": "receita-09",
+    "imagem": "/materiais/receita-09.jpg",
     "categoria": "Mañana y Al despertar",
     "tag": "🍓 Desayuno · 5 min",
     "titulo": "Jugo de Fresa con Chía",
@@ -1763,6 +1829,7 @@ export const RECEITAS = [
   },
   {
     "id": "receita-10",
+    "imagem": "/materiais/receita-10.jpg",
     "categoria": "Antes de las comidas",
     "tag": "🍋 Antes de las comidas · 3 min",
     "titulo": "Limonada con Jengibre y Menta",
@@ -1809,6 +1876,7 @@ export const RECEITAS = [
   },
   {
     "id": "receita-11",
+    "imagem": "/materiais/receita-11.jpg",
     "categoria": "Mañana y Al despertar",
     "tag": "🌅 Mañana · 4 min",
     "titulo": "Licuado de Papaya con Linaza",
@@ -1855,6 +1923,7 @@ export const RECEITAS = [
   },
   {
     "id": "receita-12",
+    "imagem": "/materiais/receita-12.jpg",
     "categoria": "Mañana y Al despertar",
     "tag": "❤️ Mañana · 5 min",
     "titulo": "Licuado de Remolacha con Manzana",
@@ -1900,6 +1969,7 @@ export const RECEITAS = [
   },
   {
     "id": "receita-13",
+    "imagem": "/materiais/receita-13.jpg",
     "categoria": "Noche y Antes de dormir",
     "tag": "🌙 Noche · 5 min",
     "titulo": "Smoothie de Maracuyá con Avena",
@@ -1945,6 +2015,7 @@ export const RECEITAS = [
   },
   {
     "id": "receita-14",
+    "imagem": "/materiais/receita-14.jpg",
     "categoria": "Mañana y Al despertar",
     "tag": "🥕 Mañana · 5 min",
     "titulo": "Jugo de Zanahoria con Naranja",
@@ -2347,6 +2418,7 @@ export const RITUAIS = [
 export const PROTOCOLOS = [
   {
     "id": "protocolo-01-manha",
+    "imagem": "/materiais/protocolo-01-manha.jpg",
     "tag": "☀️ Mañana · 15 a 20 min",
     "titulo": "Protocolo de la Mañana",
     "descricao": "Los primeros 20 minutos del día determinan cómo se va a comportar tu insulina en las próximas 12 horas.",
@@ -2393,6 +2465,7 @@ export const PROTOCOLOS = [
   },
   {
     "id": "protocolo-02-noite",
+    "imagem": "/materiais/protocolo-02-noite.jpg",
     "tag": "🌙 Noche · últimas 2 horas antes de dormir",
     "titulo": "Protocolo de la Noche",
     "descricao": "Lo que haces en las 2 horas antes de dormir impacta directamente en la insulina del día siguiente.",
@@ -2439,6 +2512,7 @@ export const PROTOCOLOS = [
   },
   {
     "id": "protocolo-03-festa",
+    "imagem": "/materiais/protocolo-03-festa.jpg",
     "tag": "🎉 Fiesta · antes, durante y después",
     "titulo": "Protocolo de la Fiesta",
     "descricao": "No necesitas rechazar la invitación, comer antes de ir ni sentirte culpable al día siguiente.",
@@ -2485,6 +2559,7 @@ export const PROTOCOLOS = [
   },
   {
     "id": "protocolo-04-viagem",
+    "imagem": "/materiais/protocolo-04-viagem.jpg",
     "tag": "✈️ Viaje · antes y durante",
     "titulo": "Protocolo del Viaje",
     "descricao": "Viajar no tiene que ser sinónimo de abandono total. Con pequeñas elecciones mantienes el ritmo sin renunciar al paseo.",
@@ -2531,6 +2606,7 @@ export const PROTOCOLOS = [
   },
   {
     "id": "protocolo-05-visita",
+    "imagem": "/materiais/protocolo-05-visita.jpg",
     "tag": "🏠 Visita · cuando recibes o te reciben",
     "titulo": "Protocolo de la Visita",
     "descricao": "Recibir visitas no tiene que convertirse en sabotaje. Puedes ser una buena anfitriona y seguir con tu proceso.",
@@ -2577,6 +2653,7 @@ export const PROTOCOLOS = [
   },
   {
     "id": "protocolo-06-preguica-cansaco",
+    "imagem": "/materiais/protocolo-06-preguica-cansaco.jpg",
     "tag": "😴 Pereza y Cansancio · días difíciles",
     "titulo": "Protocolo de la Pereza",
     "descricao": "Para los días en que no tienes energía ni ganas. El secreto es no dejar que el cansancio se convierta en abandono.",
@@ -2623,6 +2700,7 @@ export const PROTOCOLOS = [
   },
   {
     "id": "protocolo-07-marmita",
+    "imagem": "/materiais/protocolo-07-marmita.jpg",
     "tag": "🥡 Lonchera · armarla sin errores y sin sufrir",
     "titulo": "Protocolo de la Lonchera",
     "descricao": "La lonchera correcta es la mejor estrategia contra la improvisación. Decides en casa, donde tienes el control. No en la fila del restaurante.",
@@ -2669,6 +2747,7 @@ export const PROTOCOLOS = [
   },
   {
     "id": "protocolo-08-fim-de-semana",
+    "imagem": "/materiais/protocolo-08-fim-de-semana.jpg",
     "tag": "🌅 Fin de Semana · sin perder el hilo",
     "titulo": "Protocolo del Fin de Semana",
     "descricao": "El fin de semana es donde la mayoría pierde lo que logró durante la semana. No por accidente. Por falta de plan.",
@@ -2715,6 +2794,7 @@ export const PROTOCOLOS = [
   },
   {
     "id": "protocolo-09-tpm-ciclo",
+    "imagem": "/materiais/protocolo-09-tpm-ciclo.jpg",
     "tag": "🌸 SPM y Ciclo · los días más difíciles del mes",
     "titulo": "Protocolo del SPM y del Ciclo",
     "descricao": "El síndrome premenstrual (SPM) no es una excusa, pero es real. Tu cuerpo cambia, tus necesidades cambian. Saberlo lo cambia todo.",
@@ -2761,6 +2841,7 @@ export const PROTOCOLOS = [
   },
   {
     "id": "protocolo-10-estresse-ansiedade",
+    "imagem": "/materiais/protocolo-10-estresse-ansiedade.jpg",
     "tag": "😤 Estrés y Ansiedad · cuando la cabeza le estorba al cuerpo",
     "titulo": "Protocolo del Estrés",
     "descricao": "El estrés crónico es uno de los mayores bloqueadores de la pérdida de peso. No por lo que comes. Por lo que les hace a tus hormonas.",

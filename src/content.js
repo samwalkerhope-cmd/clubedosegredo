@@ -13,6 +13,63 @@ export const APP = {
   "whatsappRotulo": "Dra. do Segredo no WhatsApp"
 }
 
+// =====================================================================
+// LINKS DE CHECKOUT E OFERTAS (edite aqui os links e valores)
+// =====================================================================
+export const OFERTAS = {
+  "whatsappDraUrl": "",
+  "salada": {
+    "checkoutUrl": "",
+    "preco": "R$ 19,90",
+    "cardTitulo": "Salada de pote — 60 receitas",
+    "cardSubtitulo": "Emagreça sem passar fome",
+    "badge": "Oferta exclusiva pra você",
+    "titulo": "Salada de Pote",
+    "descricao": "60 receitas + 19 molhos pra emagrecer sem passar fome — prontas pra sua semana inteira.",
+    "itens": [
+      "60 receitas de salada no pote",
+      "19 molhos que cabem na dieta",
+      "Guia: como montar e conservar a semana toda",
+      "Você recebe no e-mail e no WhatsApp"
+    ],
+    "pagamentoRotulo": "Pagamento único",
+    "botao": "Quero as receitas por R$ 19,90",
+    "fechar": "Agora não"
+  },
+  "clube": {
+    "checkoutUrl": "",
+    "vslUrl": "/vsl.html",
+    "preco": "R$ 67",
+    "titulo": "Dra. do Segredo no WhatsApp",
+    "subtitulo": "O Segredo da Insulina te mostra o caminho, a Dra. do Segredo trilha esse caminho com você no WhatsApp.",
+    "avisoVideo": "Assista ao vídeo antes de decidir",
+    "beneficios": [
+      {
+        "titulo": "Protocolos para imprevistos",
+        "descricao": "Festa, viagem, TPM, preguiça — prontos para usar."
+      },
+      {
+        "titulo": "Dra. do Segredo particular no WhatsApp",
+        "descricao": "Acompanhamento próximo, nunca sozinha."
+      },
+      {
+        "titulo": "Minha Evolução",
+        "descricao": "Foto, peso e medidas, semana a semana."
+      }
+    ],
+    "acessoRotulo": "Acesso completo",
+    "pagamentoRotulo": "pagamento único",
+    "resumo": "Dra. do Segredo por todos os 21 dias + Protocolos e materiais pra sempre.",
+    "garantia": "Garantia incondicional de 7 dias",
+    "itens": [
+      "Liberação imediata após o pagamento",
+      "Sem mensalidade, sem surpresas",
+      "Acesso pelo mesmo login"
+    ],
+    "botao": "Quero ter a Dra. do Segredo no meu WhatsApp"
+  }
+}
+
 export const SEMANAS = [
   {
     "numero": 1,
@@ -1357,6 +1414,7 @@ export const CATEGORIAS = [
 export const RECEITAS = [
   {
     "id": "receita-01",
+    "imagem": "/materiais/receita-01.jpg",
     "categoria": "Manhã e Ao acordar",
     "tag": "🌅 Ao acordar · 3 min",
     "titulo": "Água de Berinjela com Limão",
@@ -1402,6 +1460,7 @@ export const RECEITAS = [
   },
   {
     "id": "receita-02",
+    "imagem": "/materiais/receita-02.jpg",
     "categoria": "Manhã e Ao acordar",
     "tag": "🥕 Café da manhã · 4 min",
     "titulo": "Smoothie de Cenoura com Gengibre",
@@ -1448,6 +1507,7 @@ export const RECEITAS = [
   },
   {
     "id": "receita-03",
+    "imagem": "/materiais/receita-03.jpg",
     "categoria": "Manhã e Ao acordar",
     "tag": "🍌 Café da manhã · 5 min",
     "titulo": "Smoothie de Banana Verde",
@@ -1494,6 +1554,7 @@ export const RECEITAS = [
   },
   {
     "id": "receita-04",
+    "imagem": "/materiais/receita-04.jpg",
     "categoria": "Manhã e Ao acordar",
     "tag": "❤️ Qualquer hora · 5 min",
     "titulo": "Suco de Beterraba com Laranja",
@@ -1539,6 +1600,7 @@ export const RECEITAS = [
   },
   {
     "id": "receita-05",
+    "imagem": "/materiais/receita-05.jpg",
     "categoria": "Tarde e Saciedade",
     "tag": "☀️ Tarde · 3 min",
     "titulo": "Suco de Melancia com Hortelã",
@@ -1583,6 +1645,7 @@ export const RECEITAS = [
   },
   {
     "id": "receita-06",
+    "imagem": "/materiais/receita-06.jpg",
     "categoria": "Manhã e Ao acordar",
     "tag": "💧 O dia todo · 3 min",
     "titulo": "Água de Pepino com Hortelã",
@@ -1628,6 +1691,7 @@ export const RECEITAS = [
   },
   {
     "id": "receita-07",
+    "imagem": "/materiais/receita-07.jpg",
     "categoria": "Manhã e Ao acordar",
     "tag": "🌞 Manhã · 4 min",
     "titulo": "Suco de Abacaxi com Cúrcuma",
@@ -1674,6 +1738,7 @@ export const RECEITAS = [
   },
   {
     "id": "receita-08",
+    "imagem": "/materiais/receita-08.jpg",
     "categoria": "Manhã e Ao acordar",
     "tag": "🍇 Lanche · 5 min",
     "titulo": "Suco de Uva Roxa com Canela",
@@ -1719,6 +1784,7 @@ export const RECEITAS = [
   },
   {
     "id": "receita-09",
+    "imagem": "/materiais/receita-09.jpg",
     "categoria": "Manhã e Ao acordar",
     "tag": "🍓 Café da manhã · 5 min",
     "titulo": "Suco de Morango com Chia",
@@ -1765,6 +1831,7 @@ export const RECEITAS = [
   },
   {
     "id": "receita-10",
+    "imagem": "/materiais/receita-10.jpg",
     "categoria": "Antes das refeições",
     "tag": "🍋 Antes das refeições · 3 min",
     "titulo": "Limonada com Gengibre e Hortelã",
@@ -1811,6 +1878,7 @@ export const RECEITAS = [
   },
   {
     "id": "receita-11",
+    "imagem": "/materiais/receita-11.jpg",
     "categoria": "Manhã e Ao acordar",
     "tag": "🌅 Manhã · 4 min",
     "titulo": "Vitamina de Mamão com Linhaça",
@@ -1857,6 +1925,7 @@ export const RECEITAS = [
   },
   {
     "id": "receita-12",
+    "imagem": "/materiais/receita-12.jpg",
     "categoria": "Manhã e Ao acordar",
     "tag": "❤️ Manhã · 5 min",
     "titulo": "Vitamina de Beterraba com Maçã",
@@ -1902,6 +1971,7 @@ export const RECEITAS = [
   },
   {
     "id": "receita-13",
+    "imagem": "/materiais/receita-13.jpg",
     "categoria": "Noite e Antes de dormir",
     "tag": "🌙 Noite · 5 min",
     "titulo": "Smoothie de Maracujá com Aveia",
@@ -1947,6 +2017,7 @@ export const RECEITAS = [
   },
   {
     "id": "receita-14",
+    "imagem": "/materiais/receita-14.jpg",
     "categoria": "Manhã e Ao acordar",
     "tag": "🥕 Manhã · 5 min",
     "titulo": "Suco de Cenoura com Laranja",
@@ -2349,6 +2420,7 @@ export const RITUAIS = [
 export const PROTOCOLOS = [
   {
     "id": "protocolo-01-manha",
+    "imagem": "/materiais/protocolo-01-manha.jpg",
     "tag": "☀️ Manhã · 15 a 20 min",
     "titulo": "Protocolo da Manhã",
     "descricao": "Os primeiros 20 minutos do dia determinam como sua insulina vai se comportar nas próximas 12 horas.",
@@ -2395,6 +2467,7 @@ export const PROTOCOLOS = [
   },
   {
     "id": "protocolo-02-noite",
+    "imagem": "/materiais/protocolo-02-noite.jpg",
     "tag": "🌙 Noite · últimas 2 horas antes de dormir",
     "titulo": "Protocolo da Noite",
     "descricao": "O que você faz nas 2 horas antes de dormir impacta diretamente a insulina do dia seguinte.",
@@ -2441,6 +2514,7 @@ export const PROTOCOLOS = [
   },
   {
     "id": "protocolo-03-festa",
+    "imagem": "/materiais/protocolo-03-festa.jpg",
     "tag": "🎉 Festa · antes, durante e depois",
     "titulo": "Protocolo da Festa",
     "descricao": "Você não precisa recusar convite, comer antes de ir nem se sentir culpada no dia seguinte.",
@@ -2487,6 +2561,7 @@ export const PROTOCOLOS = [
   },
   {
     "id": "protocolo-04-viagem",
+    "imagem": "/materiais/protocolo-04-viagem.jpg",
     "tag": "✈️ Viagem · antes e durante",
     "titulo": "Protocolo da Viagem",
     "descricao": "Viagem não precisa ser sinônimo de abandono total. Com pequenas escolhas, você mantém o ritmo sem abrir mão do passeio.",
@@ -2533,6 +2608,7 @@ export const PROTOCOLOS = [
   },
   {
     "id": "protocolo-05-visita",
+    "imagem": "/materiais/protocolo-05-visita.jpg",
     "tag": "🏠 Visita · quando receber ou ser recebida",
     "titulo": "Protocolo da Visita",
     "descricao": "Receber visita não precisa virar sabotagem. Você pode ser uma boa anfitriã e continuar no seu processo.",
@@ -2579,6 +2655,7 @@ export const PROTOCOLOS = [
   },
   {
     "id": "protocolo-06-preguica-cansaco",
+    "imagem": "/materiais/protocolo-06-preguica-cansaco.jpg",
     "tag": "😴 Preguiça e Cansaço · dias difíceis",
     "titulo": "Protocolo da Preguiça",
     "descricao": "Nos dias em que você não tem energia nem vontade. O segredo é não deixar o cansaço virar abandono.",
@@ -2625,6 +2702,7 @@ export const PROTOCOLOS = [
   },
   {
     "id": "protocolo-07-marmita",
+    "imagem": "/materiais/protocolo-07-marmita.jpg",
     "tag": "🥡 Marmita · montar sem erro e sem sofrimento",
     "titulo": "Protocolo da Marmita",
     "descricao": "Marmita certa é a melhor estratégia contra o improviso. Você decide em casa, onde tem controle. Não na fila do restaurante.",
@@ -2671,6 +2749,7 @@ export const PROTOCOLOS = [
   },
   {
     "id": "protocolo-08-fim-de-semana",
+    "imagem": "/materiais/protocolo-08-fim-de-semana.jpg",
     "tag": "🌅 Fim de Semana · sem perder o fio",
     "titulo": "Protocolo do Fim de Semana",
     "descricao": "O fim de semana é onde a maioria perde o que conquistou durante a semana. Não por acidente. Por falta de plano.",
@@ -2717,6 +2796,7 @@ export const PROTOCOLOS = [
   },
   {
     "id": "protocolo-09-tpm-ciclo",
+    "imagem": "/materiais/protocolo-09-tpm-ciclo.jpg",
     "tag": "🌸 TPM e Ciclo · os dias mais difíceis do mês",
     "titulo": "Protocolo da TPM e do Ciclo",
     "descricao": "A TPM não é desculpa, mas é real. Seu corpo muda, suas necessidades mudam. Saber disso muda tudo.",
@@ -2763,6 +2843,7 @@ export const PROTOCOLOS = [
   },
   {
     "id": "protocolo-10-estresse-ansiedade",
+    "imagem": "/materiais/protocolo-10-estresse-ansiedade.jpg",
     "tag": "😤 Estresse e Ansiedade · quando a cabeça atrapalha o corpo",
     "titulo": "Protocolo do Estresse",
     "descricao": "Estresse crônico é um dos maiores bloqueadores do emagrecimento. Não pelo que você come. Pelo que ele faz com seus hormônios.",

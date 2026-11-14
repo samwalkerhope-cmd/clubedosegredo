@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { HashRouter, Routes, Route, Navigate, NavLink, Link, Outlet, useNavigate, useParams } from 'react-router-dom'
-import { Crown, Map, Gift, LineChart, User, Check, ChevronLeft, ChevronRight, ChevronDown, MessageCircle, LogOut, FileText, Trash2, ShoppingBasket, ShieldCheck, ChefHat, Clock, Sparkles, Flame, LifeBuoy } from 'lucide-react'
-import { APP, DIAS, SEMANAS, SEGREDOS, PRESENTES, LISTA_COMPRAS, RECEITAS, CATEGORIAS, RITUAIS, PROTOCOLOS, RECEITA_DO_DIA } from './content'
+import { HashRouter, Routes, Route, Navigate, NavLink, Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Crown, Map, Gift, LineChart, User, Check, ChevronLeft, ChevronRight, ChevronDown, MessageCircle, LogOut, FileText, Trash2, ShoppingBasket, ShieldCheck, ChefHat, Clock, Sparkles, Flame, LifeBuoy, Settings, ExternalLink, Salad, X, Volume2 } from 'lucide-react'
+import { APP, OFERTAS, DIAS, SEMANAS, SEGREDOS, PRESENTES, LISTA_COMPRAS, RECEITAS, CATEGORIAS, RITUAIS, PROTOCOLOS, RECEITA_DO_DIA } from './content'
 import * as store from './store'
 import Evolucao from './Evolucao'
 
@@ -83,13 +83,39 @@ const abas = [
   { para: '/perfil', rotulo: 'Perfil', Icone: User },
 ]
 
-function Moldura() {
+function Moldura({ plano }) {
+  const { pathname } = useLocation()
+  const naCapa = pathname === '/'
+  const premium = plano !== 'padrao'
   return (
     <div className="mx-auto flex min-h-full max-w-md flex-col">
-      <header className="flex items-center gap-3 bg-azul-900 px-5 py-4">
-        <Marca tamanho="h-10 w-10 text-base" />
-        <span className="font-serif text-xl font-bold tracking-wide text-white">{APP.nome}</span>
-      </header>
+      {!naCapa && (
+        <header className="flex items-center justify-between gap-3 bg-azul-900 px-5 py-4">
+          <Link to="/" className="flex items-center gap-3">
+            <Marca tamanho="h-10 w-10 text-base" />
+            <span className="font-serif text-xl font-bold tracking-wide text-white">{APP.nome}</span>
+          </Link>
+          {premium ? (
+            (OFERTAS.whatsappDraUrl || APP.whatsapp) && (
+              <a
+                href={OFERTAS.whatsappDraUrl || `https://wa.me/${APP.whatsapp}?text=${encodeURIComponent('Preciso de ajuda')}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1.5 rounded-full border border-ouro-500/50 bg-azul-800 px-3 py-1.5 text-xs font-semibold text-ouro-300"
+              >
+                <MessageCircle size={15} /> Dra. no WhatsApp
+              </a>
+            )
+          ) : (
+            <Link
+              to="/clube"
+              className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-ouro-300 to-ouro-500 px-3 py-1.5 text-xs font-bold text-azul-950 shadow-sm"
+            >
+              <MessageCircle size={15} /> Dra. no WhatsApp <ChevronRight size={14} />
+            </Link>
+          )}
+        </header>
+      )}
       <main className="flex-1 px-5 pb-28 pt-6"><Outlet /></main>
       <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-azul-100 bg-white">
         <div className="mx-auto flex max-w-md">
@@ -188,51 +214,293 @@ function BlocoSegredos({ abertoInicial = false }) {
   )
 }
 
-// ------------------------------------------------------------------ Início
-function Inicio({ usuario, feitos }) {
-  const proximo = DIAS.find((d) => !feitos.includes(d.dia))
-  const pct = Math.round((feitos.length / DIAS.length) * 100)
+// ------------------------------------------------------------------ Oferta Salada de Pote (Banner + Modal)
+const CHAVE_OFERTA_SALADA = 'ofertaSaladaV1'
+const ESTADO_INICIAL_SALADA = { acessos: 0, shows: 0, last: 0, fechada: false }
+
+function OfertaSalada() {
+  const [aberta, setAberta] = useState(false)
+  const s = OFERTAS.salada
+
+  useEffect(() => {
+    const atual = store.guardado.get(CHAVE_OFERTA_SALADA, ESTADO_INICIAL_SALADA)
+    const acessos = (atual.acessos || 0) + 1
+    let novo = { ...atual, acessos }
+    const doisDias = 2 * 24 * 60 * 60 * 1000
+    if (!atual.fechada && (atual.shows || 0) < 3 && Date.now() - (atual.last || 0) >= doisDias && acessos >= 3) {
+      setAberta(true)
+      novo = { ...novo, shows: (atual.shows || 0) + 1, last: Date.now() }
+    }
+    store.guardado.set(CHAVE_OFERTA_SALADA, novo)
+  }, [])
+
+  function comprar() {
+    const atual = store.guardado.get(CHAVE_OFERTA_SALADA, ESTADO_INICIAL_SALADA)
+    store.guardado.set(CHAVE_OFERTA_SALADA, { ...atual, fechada: true })
+    if (s.checkoutUrl) window.open(s.checkoutUrl, '_blank', 'noopener,noreferrer')
+    setAberta(false)
+  }
+
   return (
-    <div className="space-y-5">
-      <section className="rounded-3xl bg-gradient-to-br from-azul-800 to-azul-950 p-6 text-center text-white shadow-card">
-        <div className="mx-auto grid h-16 w-16 place-items-center rounded-full border-2 border-ouro-500 bg-azul-900"><Crown className="text-ouro-300" size={30} /></div>
-        <p className="mt-4 text-xs font-semibold uppercase tracking-[.2em] text-ouro-300">{usuario.nome ? `Olá, ${usuario.nome.split(' ')[0]}` : 'Você faz parte do'}</p>
-        <h1 className="mt-1 font-serif text-4xl font-bold">{APP.plano}</h1>
-        <p className="mt-1 text-xs text-ouro-200">{APP.frase}</p>
-        <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/15"><div className="h-full rounded-full bg-ouro-500" style={{ width: `${pct}%` }} /></div>
-        <p className="mt-2 text-sm text-azul-200">{feitos.length} de {DIAS.length} dias concluídos</p>
-      </section>
+    <>
+      <button
+        type="button"
+        onClick={() => setAberta(true)}
+        className="flex w-full items-center gap-3 rounded-2xl bg-gradient-to-br from-ouro-300 to-ouro-500 p-4 text-left text-azul-950 shadow-card transition active:scale-[0.99]"
+      >
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-azul-950/10">
+          <Salad size={24} className="text-azul-950" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-black">{s.cardTitulo}</p>
+          <p className="text-xs font-semibold text-azul-950/75">{s.cardSubtitulo} · {s.preco}</p>
+        </div>
+        <ChevronRight size={20} className="shrink-0" />
+      </button>
 
-      {proximo ? (
-        <Link to={`/jornada/${proximo.dia}`} className="btn-ouro w-full">Continuar no dia {proximo.dia} <ChevronRight size={18} /></Link>
-      ) : (
-        <p className="card p-5 text-center font-semibold">Você concluiu os {DIAS.length} dias. Parabéns!</p>
+      {aberta && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
+          <div className=" -inset-0 absolute inset-0 bg-azul-950/50 backdrop-blur-sm" onClick={() => setAberta(false)} />
+          <div className="relative flex max-h-[90vh] w-full max-w-md flex-col rounded-t-3xl bg-creme px-5 pb-8 pt-4 shadow-2xl">
+            <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-azul-900/15" />
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setAberta(false)}
+                aria-label="Fechar"
+                className="grid h-10 w-10 place-items-center rounded-full bg-azul-900 text-white shadow-sm active:scale-95"
+              >
+                <X size={20} strokeWidth={2.4} />
+              </button>
+            </div>
+            <div className="overflow-y-auto pt-1">
+              <div className="text-center">
+                <span className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-ouro-300 to-ouro-500 shadow-card">
+                  <Salad size={32} className="text-azul-950" />
+                </span>
+                <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-ouro-600">{s.badge}</p>
+                <h2 className="mt-1 font-serif text-2xl font-black text-azul-900">{s.titulo}</h2>
+                <p className="mt-1.5 text-sm font-medium leading-relaxed text-azul-800">{s.descricao}</p>
+              </div>
+
+              <div className="mt-4 space-y-2">
+                {s.itens.map((item) => (
+                  <div key={item} className="flex items-center gap-2.5 rounded-2xl bg-white p-3 shadow-sm">
+                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-500/15 text-emerald-700">
+                      <Check size={15} strokeWidth={3} />
+                    </span>
+                    <p className="text-sm font-semibold text-azul-900">{item}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 rounded-2xl bg-azul-900/5 p-4 text-center">
+                <p className="text-xs font-semibold text-azul-700">{s.pagamentoRotulo}</p>
+                <p className="mt-0.5 font-serif text-3xl font-black text-azul-900">{s.preco}</p>
+              </div>
+
+              <button
+                type="button"
+                onClick={comprar}
+                className="btn-ouro mt-4 w-full py-4 text-base font-bold"
+              >
+                {s.botao}
+              </button>
+              <button
+                type="button"
+                onClick={() => setAberta(false)}
+                className="mt-2 w-full py-2 text-sm font-bold text-azul-700/70"
+              >
+                {s.fechar}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
+    </>
+  )
+}
 
-      <BlocoSegredos abertoInicial={false} />
+// ------------------------------------------------------------------ Oferta Clube (/clube — VSL + Checkout)
+function ClubeOferta() {
+  const navegar = useNavigate()
+  const c = OFERTAS.clube
+  const iconesBeneficios = [LifeBuoy, MessageCircle, LineChart]
 
-      <div className="grid grid-cols-2 gap-3">
-        <Link to="/protocolos" className="card flex flex-col justify-between p-4">
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-azul-900 text-ouro-300"><LifeBuoy size={20} /></div>
-          <div className="mt-3">
-            <p className="font-semibold text-azul-900">Imprevistos</p>
-            <p className="text-xs text-azul-700">10 protocolos práticos</p>
-          </div>
-        </Link>
-        <Link to="/rituais" className="card flex flex-col justify-between p-4">
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-azul-900 text-ouro-300"><Flame size={20} /></div>
-          <div className="mt-3">
-            <p className="font-semibold text-azul-900">Rituais 7 min</p>
-            <p className="text-xs text-azul-700">5 treinos leves em casa</p>
-          </div>
-        </Link>
+  function comprar() {
+    if (c.checkoutUrl) window.open(c.checkoutUrl, '_blank', 'noopener,noreferrer')
+  }
+
+  return (
+    <div className="space-y-6 pb-16">
+      <button className="flex items-center gap-1 text-sm font-medium text-azul-700" onClick={() => navegar(-1)}>
+        <ChevronLeft size={18} /> Voltar
+      </button>
+
+      <div className="text-center">
+        <div className="mx-auto grid h-16 w-16 place-items-center rounded-full border-2 border-ouro-500 bg-azul-900 text-ouro-300 shadow-card">
+          <MessageCircle size={30} />
+        </div>
+        <h1 className="mt-4 font-serif text-3xl font-bold leading-tight text-azul-900">{c.titulo}</h1>
+        <p className="mx-auto mt-2.5 max-w-[320px] text-sm leading-relaxed text-azul-800">{c.subtitulo}</p>
       </div>
 
-      {APP.whatsapp && (
-        <a className="btn-linha w-full" href={`https://wa.me/${APP.whatsapp}?text=${encodeURIComponent('Preciso de ajuda')}`} target="_blank" rel="noreferrer">
-          <MessageCircle size={18} className="text-ouro-600" /> {APP.whatsappRotulo}
-        </a>
+      <div>
+        <div className="overflow-hidden rounded-2xl border border-ouro-500/50 bg-azul-950 shadow-card">
+          <iframe
+            src={c.vslUrl}
+            title="Vídeo"
+            className="aspect-video w-full border-0"
+            allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+          />
+        </div>
+        <p className="mt-2 flex items-center justify-center gap-1.5 text-xs font-medium text-azul-700">
+          <Volume2 size={15} className="text-ouro-600" /> {c.avisoVideo}
+        </p>
+      </div>
+
+      <div className="space-y-2.5">
+        {c.beneficios.map((b, i) => {
+          const Icone = iconesBeneficios[i] || Sparkles
+          return (
+            <div key={b.titulo} className="card flex items-center gap-3.5 p-3.5">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-ouro-500/15 text-ouro-600">
+                <Icone size={22} />
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold leading-tight text-azul-900">{b.titulo}</p>
+                <p className="mt-0.5 text-xs text-azul-700">{b.descricao}</p>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      <div className="rounded-2xl bg-gradient-to-br from-azul-900 to-azul-950 p-6 text-center text-white shadow-card">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ouro-300">{c.acessoRotulo}</p>
+        <p className="mt-1 font-serif text-4xl font-bold leading-none">{c.preco}</p>
+        <p className="mt-1 text-xs text-white/80">{c.pagamentoRotulo}</p>
+        <p className="mx-auto mt-3 max-w-[280px] text-xs leading-relaxed text-white/80">{c.resumo}</p>
+        <div className="mt-3 flex items-center justify-center gap-2 text-xs font-medium text-ouro-300">
+          <ShieldCheck size={16} /> {c.garantia}
+        </div>
+      </div>
+
+      <ul className="space-y-2">
+        {c.itens.map((item) => (
+          <li key={item} className="flex items-center gap-2.5 text-sm text-azul-900">
+            <Check size={16} className="shrink-0 text-ouro-600" strokeWidth={2.6} /> {item}
+          </li>
+        ))}
+      </ul>
+
+      <button
+        type="button"
+        onClick={comprar}
+        className="flex w-full items-center justify-center gap-2.5 rounded-2xl border border-ouro-500 bg-gradient-to-r from-ouro-300 to-ouro-500 px-4 py-4 text-sm font-bold text-azul-950 shadow-card transition active:scale-[0.99]"
+      >
+        <MessageCircle size={20} className="shrink-0" />
+        <span>{c.botao}</span>
+      </button>
+    </div>
+  )
+}
+
+// ------------------------------------------------------------------ Início
+function Inicio({ plano }) {
+  const premium = plano !== 'padrao'
+  return (
+    <div className="relative flex min-h-[calc(100vh-8.5rem)] flex-col justify-between py-2 text-center">
+      <Link
+        to="/perfil"
+        aria-label="Minha conta"
+        className="absolute right-0 top-0 grid h-11 w-11 place-items-center rounded-full border border-ouro-500/35 bg-white/80 text-azul-900 shadow-sm transition active:scale-95"
+      >
+        <Settings size={20} strokeWidth={1.7} />
+      </Link>
+
+      <div className="flex flex-col items-center pt-1">
+        <div className="grid h-[58px] w-[58px] place-items-center rounded-full border-[1.5px] border-ouro-500 bg-white/80 font-serif text-[20px] font-bold tracking-wider text-ouro-600 shadow-sm">
+          {iniciais}
+        </div>
+        <p className="mt-3 font-serif text-[16px] font-semibold uppercase tracking-[0.22em] text-azul-900">
+          CLUBE <span className="text-ouro-600">DO</span> SEGREDO
+        </p>
+        <div className="mt-2.5 flex items-center gap-2.5">
+          <span className="h-px w-14 bg-gradient-to-r from-transparent to-ouro-500/70" />
+          <span className="text-[10px] leading-none text-ouro-600">✦</span>
+          <span className="h-px w-14 bg-gradient-to-l from-transparent to-ouro-500/70" />
+        </div>
+      </div>
+
+      {premium ? (
+        <div className="my-auto py-8">
+          <div className="mx-auto mb-5 grid h-20 w-20 place-items-center rounded-full border-2 border-ouro-500 bg-azul-900 text-ouro-300 shadow-card">
+            <Crown size={36} strokeWidth={1.6} />
+          </div>
+          <p className="font-serif text-[13px] font-semibold uppercase tracking-[0.22em] text-ouro-600">
+            VOCÊ FAZ PARTE DO
+          </p>
+          <h1 className="mt-1 font-serif text-[38px] font-bold leading-tight text-azul-900">
+            {APP.plano}
+          </h1>
+          <p className="mx-auto mt-3 max-w-[270px] text-[15px] leading-relaxed text-azul-800">
+            E tem acesso à <strong className="font-semibold text-azul-900">Dra. do Segredo no seu WhatsApp</strong>.
+          </p>
+
+          <Link
+            to="/jornada"
+            className="mt-8 flex w-full items-center justify-center gap-3 rounded-2xl border-[1.5px] border-ouro-500 bg-azul-900 px-6 py-4 text-[14px] font-bold uppercase tracking-[0.12em] text-white shadow-card transition active:scale-[0.99]"
+          >
+            <Crown size={18} className="text-ouro-300" strokeWidth={1.8} />
+            <span>ACESSAR MEU CLUBE</span>
+            <ChevronRight size={18} className="text-ouro-300" strokeWidth={2.2} />
+          </Link>
+        </div>
+      ) : (
+        <div className="my-auto py-6 text-left">
+          <p className="mb-3 ml-1 font-serif text-xs font-semibold uppercase tracking-[0.22em] text-ouro-600">
+            Meus acessos
+          </p>
+          <Link
+            to="/jornada"
+            className="card flex w-full items-center gap-4 p-4 transition active:scale-[0.99]"
+          >
+            <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full border border-ouro-500 bg-azul-900 text-ouro-300">
+              <Sparkles size={26} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-base font-semibold uppercase tracking-wider text-azul-900">Segredo da Insulina</span>
+              <span className="mt-0.5 block text-sm text-azul-700">Minha rotina</span>
+            </span>
+            <ChevronRight size={22} className="shrink-0 text-azul-700" />
+          </Link>
+
+          <Link
+            to="/clube"
+            className="mt-6 flex w-full flex-col items-center rounded-3xl border border-ouro-600 bg-gradient-to-br from-ouro-300 to-ouro-500 px-6 py-7 text-center text-azul-950 shadow-card transition active:scale-[0.99]"
+          >
+            <span className="mb-3 grid h-12 w-12 place-items-center rounded-full bg-azul-900 text-ouro-300">
+              <MessageCircle size={26} />
+            </span>
+            <span className="font-serif text-xs font-semibold uppercase tracking-[0.2em] text-azul-950">Tenha a</span>
+            <span className="my-1 font-serif text-3xl font-bold leading-none text-azul-950">Dra. do Segredo no WhatsApp</span>
+            <span className="mb-3 mt-1 flex w-28 items-center gap-2 opacity-60">
+              <span className="h-px flex-1 bg-azul-950" />
+              <span className="text-[10px]">✦</span>
+              <span className="h-px flex-1 bg-azul-950" />
+            </span>
+            <span className="text-sm font-medium leading-snug text-azul-900">
+              {OFERTAS.clube.subtitulo}
+            </span>
+            <span className="mt-4 grid h-10 w-10 place-items-center rounded-full bg-azul-900 text-ouro-300 shadow-sm">
+              <ChevronRight size={18} strokeWidth={2.4} />
+            </span>
+          </Link>
+        </div>
       )}
+
+      <div className="h-2" />
     </div>
   )
 }
@@ -240,21 +508,42 @@ function Inicio({ usuario, feitos }) {
 // ------------------------------------------------------------------ Jornada
 function Jornada({ feitos }) {
   const hoje = DIAS.find((d) => !feitos.includes(d.dia))?.dia
+  const pct = Math.round((feitos.length / DIAS.length) * 100)
   return (
     <div className="space-y-6">
       <div>
         <p className="sobretitulo">Sua jornada</p>
-        <h1 className="titulo">{DIAS.length} dias, um de cada vez</h1>
+        <h1 className="titulo">{DIAS.length} dias para o seu resultado</h1>
+        <div className="mt-3 flex items-center gap-3">
+          <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-ouro-500/20">
+            <div className="h-full rounded-full bg-gradient-to-r from-ouro-300 to-ouro-500 transition-all duration-500" style={{ width: `${pct}%` }} />
+          </div>
+          <span className="shrink-0 text-xs font-semibold text-azul-700">{feitos.length} de {DIAS.length}</span>
+        </div>
       </div>
+
+      {hoje ? (
+        <Link to={`/jornada/${hoje}`} className="btn-ouro w-full">
+          Continuar no Dia {hoje} <ChevronRight size={18} />
+        </Link>
+      ) : (
+        <p className="card p-4 text-center text-sm font-semibold">Você concluiu os {DIAS.length} dias. Parabéns!</p>
+      )}
+
+      <BlocoSegredos abertoInicial={false} />
+
       <div className="space-y-3">
         <Link to="/compras" className="card flex items-center gap-4 p-4">
           <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-azul-900 text-ouro-300"><ShoppingBasket size={22} /></div>
           <div className="flex-1">
             <p className="font-semibold">Lista de compras dos 21 dias</p>
-            <p className="text-sm text-azul-700">O que ter em casa para toda a jornada</p>
+            <p className="text-sm text-azul-700">Tudo que você precisa comprar pro programa</p>
           </div>
           <ChevronRight size={18} className="text-azul-700" />
         </Link>
+
+        <OfertaSalada />
+
         <Link to="/receitas" className="flex items-center gap-4 rounded-2xl bg-gradient-to-br from-ouro-300 to-ouro-500 p-4 text-azul-950 shadow-card">
           <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-white/40"><ChefHat size={22} /></div>
           <div className="flex-1">
@@ -283,17 +572,24 @@ function Jornada({ feitos }) {
       {SEMANAS.map((s) => (
         <section key={s.numero}>
           <h2 className="mb-3 text-sm font-semibold text-azul-700">{s.titulo}</h2>
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             {DIAS.filter((d) => d.dia >= s.dias[0] && d.dia <= s.dias[1]).map((d) => {
               const feito = feitos.includes(d.dia)
               return (
                 <Link key={d.dia} to={`/jornada/${d.dia}`} aria-label={`Dia ${d.dia}${feito ? ', concluído' : ''}`}
-                  className={`relative grid aspect-square place-items-center rounded-2xl border text-center shadow-card transition active:scale-95 ${feito ? 'border-azul-900 bg-azul-900 text-white' : d.dia === hoje ? 'border-2 border-ouro-500 bg-white' : 'border-azul-100 bg-white'}`}>
-                  <span>
-                    <span className={`block text-[10px] uppercase tracking-widest ${feito ? 'text-ouro-300' : 'text-azul-700/70'}`}>{d.dia === hoje ? 'Hoje' : 'Dia'}</span>
-                    <span className="block font-serif text-2xl font-bold">{d.dia}</span>
-                  </span>
-                  {feito && <Check size={14} className="absolute right-2 top-2 text-ouro-300" />}
+                  className={`relative flex min-h-[88px] flex-col items-center justify-center rounded-2xl border p-3 text-center shadow-card transition active:scale-95 ${feito ? 'border-azul-900 bg-azul-900 text-white' : d.dia === hoje ? 'border-2 border-ouro-500 bg-white' : 'border-azul-100 bg-white'}`}>
+                  {d.dia === hoje && (
+                    <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-ouro-300 to-ouro-500 px-2.5 py-0.5 text-[10px] font-bold text-azul-950 shadow-sm">
+                      Hoje
+                    </span>
+                  )}
+                  <span className={`block text-xs font-medium ${feito ? 'text-ouro-300' : 'text-azul-700/70'}`}>Dia</span>
+                  <span className="block font-serif text-3xl font-bold leading-tight">{d.dia}</span>
+                  {feito && (
+                    <span className="absolute right-2 top-2 grid h-5 w-5 place-items-center rounded-full bg-ouro-500 text-azul-950">
+                      <Check size={12} strokeWidth={3} />
+                    </span>
+                  )}
                 </Link>
               )
             })}
@@ -366,7 +662,7 @@ function Receitas() {
   const navegar = useNavigate()
   return (
     <div className="space-y-6">
-      <button className="flex items-center gap-1 text-sm font-medium text-azul-700" onClick={() => navegar('/jornada')}><ChevronLeft size={18} /> Jornada</button>
+      <button className="flex items-center gap-1 text-sm font-medium text-azul-700" onClick={() => navegar(-1)}><ChevronLeft size={18} /> Voltar</button>
       <div>
         <p className="sobretitulo">Receitas Poderosas</p>
         <h1 className="titulo">Chás, shots, águas e bebidas</h1>
@@ -381,12 +677,15 @@ function Receitas() {
             <ul className="card divide-y divide-azul-100">
               {itens.map((r) => (
                 <li key={r.id}>
-                  <Link to={`/receitas/${r.id}`} className="flex items-center gap-3 px-5 py-3.5">
-                    <div className="flex-1">
-                      <p className="font-semibold">{r.titulo}</p>
-                      <p className="text-xs text-azul-700">{r.tag || `${r.tempo} · ${r.rende}`}</p>
+                  <Link to={`/receitas/${r.id}`} className="flex items-center gap-3.5 px-4 py-3.5">
+                    {r.imagem && (
+                      <img src={r.imagem} alt={r.titulo} className="h-12 w-12 shrink-0 rounded-xl object-cover" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-azul-900">{r.titulo}</p>
+                      <p className="truncate text-xs text-azul-700">{r.tag || `${r.tempo} · ${r.rende}`}</p>
                     </div>
-                    <ChevronRight size={18} className="text-azul-700" />
+                    <ChevronRight size={18} className="shrink-0 text-azul-700" />
                   </Link>
                 </li>
               ))}
@@ -406,16 +705,30 @@ function Receita() {
   return (
     <div className="space-y-5">
       <button className="flex items-center gap-1 text-sm font-medium text-azul-700" onClick={() => navegar(-1)}><ChevronLeft size={18} /> Voltar</button>
-      <div>
-        <p className="sobretitulo">{r.tag || r.categoria}</p>
-        <h1 className="titulo">{r.titulo}</h1>
-        {r.descricao && <p className="mt-2 text-sm leading-relaxed text-azul-800">{r.descricao}</p>}
-        <p className="mt-2 flex items-center gap-2 text-xs font-medium text-azul-700"><Clock size={15} className="text-ouro-600" /> {r.tempo} · {r.quandoTomar || r.rende}</p>
-      </div>
+
+      {r.imagem ? (
+        <div className="relative h-60 overflow-hidden rounded-2xl bg-azul-950 shadow-card">
+          <img src={r.imagem} alt={r.titulo} className="h-full w-full object-cover opacity-80" />
+          <div className="absolute inset-0 bg-gradient-to-t from-azul-950 via-azul-950/45 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 p-5 text-white">
+            <span className="inline-block rounded-full border border-ouro-300/40 bg-ouro-500/25 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-ouro-100">
+              {r.tag || r.categoria}
+            </span>
+            <h1 className="mt-2 font-serif text-3xl font-bold leading-tight text-white">{r.titulo}</h1>
+            {r.descricao && <p className="mt-1.5 text-xs leading-relaxed text-white/90">{r.descricao}</p>}
+          </div>
+        </div>
+      ) : (
+        <div>
+          <p className="sobretitulo">{r.tag || r.categoria}</p>
+          <h1 className="titulo">{r.titulo}</h1>
+          {r.descricao && <p className="mt-2 text-sm leading-relaxed text-azul-800">{r.descricao}</p>}
+        </div>
+      )}
 
       {r.quandoTomar && (
         <section className="rounded-2xl bg-gradient-to-br from-azul-900 to-azul-950 p-4 text-white shadow-card">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-ouro-300">Melhor horário</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-ouro-300">⏰ Quando tomar</p>
           <p className="mt-1 font-semibold">{r.quandoTomar}</p>
           {r.quandoDica && <p className="mt-1 text-xs text-azul-200">{r.quandoDica}</p>}
         </section>
@@ -423,7 +736,7 @@ function Receita() {
 
       {r.beneficios && r.beneficios.length > 0 && (
         <section className="space-y-2.5">
-          <h2 className="text-sm font-semibold text-azul-700">O que essa receita faz no seu corpo</h2>
+          <h2 className="text-sm font-semibold text-azul-700">O que essa receita faz pelo seu corpo</h2>
           {r.beneficios.map((b, i) => (
             <div key={i} className="card flex items-start gap-3 p-4">
               <span className="text-xl">{b.icone}</span>
@@ -473,11 +786,15 @@ function Protocolos() {
         {PROTOCOLOS.map((p) => (
           <li key={p.id}>
             <Link to={`/protocolos/${p.id}`} className="card flex items-center gap-4 p-4">
-              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-azul-900 text-ouro-300">
-                <LifeBuoy size={20} />
-              </div>
-              <div className="flex-1">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-ouro-600">{p.tag}</p>
+              {p.imagem ? (
+                <img src={p.imagem} alt={p.titulo} className="h-14 w-14 shrink-0 rounded-xl object-cover" />
+              ) : (
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-azul-900 text-ouro-300">
+                  <LifeBuoy size={20} />
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[11px] font-semibold uppercase tracking-wider text-ouro-600">{p.tag}</p>
                 <p className="font-semibold text-azul-900">{p.titulo}</p>
                 <p className="mt-0.5 line-clamp-2 text-xs text-azul-700">{p.descricao}</p>
               </div>
@@ -497,15 +814,30 @@ function Protocolo() {
   if (!p) return <Navigate to="/protocolos" replace />
   return (
     <div className="space-y-5">
-      <button className="flex items-center gap-1 text-sm font-medium text-azul-700" onClick={() => navegar(-1)}><ChevronLeft size={18} /> Protocolos</button>
-      <div>
-        <p className="sobretitulo">{p.tag}</p>
-        <h1 className="titulo">{p.titulo}</h1>
-        <p className="mt-2 text-sm leading-relaxed text-azul-800">{p.descricao}</p>
-      </div>
+      <button className="flex items-center gap-1 text-sm font-medium text-azul-700" onClick={() => navegar(-1)}><ChevronLeft size={18} /> Voltar</button>
+
+      {p.imagem ? (
+        <div className="relative h-60 overflow-hidden rounded-2xl bg-azul-950 shadow-card">
+          <img src={p.imagem} alt={p.titulo} className="h-full w-full object-cover opacity-80" />
+          <div className="absolute inset-0 bg-gradient-to-t from-azul-950 via-azul-950/45 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 p-5 text-white">
+            <span className="inline-block rounded-full border border-ouro-300/40 bg-ouro-500/25 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-ouro-100">
+              {p.tag}
+            </span>
+            <h1 className="mt-2 font-serif text-3xl font-bold leading-tight text-white">{p.titulo}</h1>
+            <p className="mt-1.5 text-xs leading-relaxed text-white/90">{p.descricao}</p>
+          </div>
+        </div>
+      ) : (
+        <div>
+          <p className="sobretitulo">{p.tag}</p>
+          <h1 className="titulo">{p.titulo}</h1>
+          <p className="mt-2 text-sm leading-relaxed text-azul-800">{p.descricao}</p>
+        </div>
+      )}
 
       <section className="card space-y-2 p-5">
-        <p className="text-xs font-bold uppercase tracking-wider text-ouro-700">O que acontece</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-ouro-700">O que costuma acontecer</p>
         <p className="text-sm leading-relaxed text-azul-800">{p.acontece}</p>
         {p.solucao && <p className="pt-1 text-sm font-semibold text-azul-900">{p.solucao}</p>}
       </section>
@@ -517,7 +849,7 @@ function Protocolo() {
       )}
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-azul-700">O que fazer passo a passo</h2>
+        <h2 className="text-sm font-semibold text-azul-700">O que fazer — passo a passo</h2>
         {p.passos.map((passo, i) => (
           <div key={i} className="card space-y-2 p-5">
             <div className="flex items-center gap-2">
@@ -537,7 +869,7 @@ function Protocolo() {
 
       {p.evitar && p.evitar.length > 0 && (
         <section className="card p-5">
-          <h2 className="font-semibold text-red-700">O que não fazer</h2>
+          <h2 className="font-semibold text-red-700">O que evitar nessa situação</h2>
           <ul className="mt-3 space-y-2">
             {p.evitar.map((item, i) => (
               <li key={i} className="flex gap-3 text-sm leading-relaxed text-azul-800">
@@ -551,7 +883,7 @@ function Protocolo() {
 
       {p.lembre && (
         <section className="rounded-2xl border border-ouro-500/40 bg-ouro-100/50 p-4 text-sm leading-relaxed text-azul-900">
-          <p className="font-semibold text-ouro-700">Lembre-se</p>
+          <p className="font-semibold text-ouro-700">Lembre sempre</p>
           <p className="mt-1">{p.lembre}</p>
         </section>
       )}
@@ -574,11 +906,15 @@ function Rituais() {
         {RITUAIS.map((r) => (
           <li key={r.id}>
             <Link to={`/rituais/${r.id}`} className="card flex items-center gap-4 p-4">
-              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-ouro-300 to-ouro-500 text-azul-950">
-                <Flame size={20} />
-              </div>
-              <div className="flex-1">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-ouro-600">{r.tag}</p>
+              {r.imagem ? (
+                <img src={r.imagem} alt={r.titulo} className="h-14 w-14 shrink-0 rounded-xl object-cover" />
+              ) : (
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-ouro-300 to-ouro-500 text-azul-950">
+                  <Flame size={20} />
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[11px] font-semibold uppercase tracking-wider text-ouro-600">{r.tag}</p>
                 <p className="font-semibold text-azul-900">{r.titulo}</p>
                 <p className="mt-0.5 line-clamp-2 text-xs text-azul-700">{r.descricao}</p>
               </div>
@@ -598,16 +934,31 @@ function Ritual() {
   if (!r) return <Navigate to="/rituais" replace />
   return (
     <div className="space-y-5">
-      <button className="flex items-center gap-1 text-sm font-medium text-azul-700" onClick={() => navegar(-1)}><ChevronLeft size={18} /> Rituais</button>
-      <div>
-        <p className="sobretitulo">{r.tag}</p>
-        <h1 className="titulo">{r.titulo}</h1>
-        <p className="mt-2 text-sm leading-relaxed text-azul-800">{r.descricao}</p>
-      </div>
+      <button className="flex items-center gap-1 text-sm font-medium text-azul-700" onClick={() => navegar(-1)}><ChevronLeft size={18} /> Voltar</button>
+
+      {r.imagem ? (
+        <div className="relative h-60 overflow-hidden rounded-2xl bg-azul-950 shadow-card">
+          <img src={r.imagem} alt={r.titulo} className="h-full w-full object-cover opacity-80" />
+          <div className="absolute inset-0 bg-gradient-to-t from-azul-950 via-azul-950/45 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 p-5 text-white">
+            <span className="inline-block rounded-full border border-ouro-300/40 bg-ouro-500/25 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-ouro-100">
+              {r.tag}
+            </span>
+            <h1 className="mt-2 font-serif text-3xl font-bold leading-tight text-white">{r.titulo}</h1>
+            <p className="mt-1.5 text-xs leading-relaxed text-white/90">{r.descricao}</p>
+          </div>
+        </div>
+      ) : (
+        <div>
+          <p className="sobretitulo">{r.tag}</p>
+          <h1 className="titulo">{r.titulo}</h1>
+          <p className="mt-2 text-sm leading-relaxed text-azul-800">{r.descricao}</p>
+        </div>
+      )}
 
       {r.quandoFazer && (
         <section className="rounded-2xl bg-gradient-to-br from-azul-900 to-azul-950 p-4 text-white shadow-card">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-ouro-300">Quando fazer</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-ouro-300">⏰ Quando fazer</p>
           <p className="mt-1 font-semibold">{r.quandoFazer}</p>
           {r.quandoDica && <p className="mt-1 text-xs text-azul-200">{r.quandoDica}</p>}
         </section>
@@ -622,7 +973,7 @@ function Ritual() {
 
       {r.beneficios && r.beneficios.length > 0 && (
         <section className="space-y-2.5">
-          <h2 className="text-sm font-semibold text-azul-700">Benefícios deste ritual</h2>
+          <h2 className="text-sm font-semibold text-azul-700">O que essa sequência faz pelo seu corpo</h2>
           {r.beneficios.map((b, i) => (
             <div key={i} className="card flex items-start gap-3 p-4">
               <span className="text-xl">{b.icone}</span>
@@ -636,7 +987,7 @@ function Ritual() {
       )}
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-azul-700">Os 4 movimentos (7 minutos)</h2>
+        <h2 className="text-sm font-semibold text-azul-700">Os 4 Exercícios</h2>
         {r.exercicios.map((ex, i) => (
           <div key={i} className="card space-y-2.5 p-5">
             <div className="flex items-center justify-between">
@@ -684,9 +1035,15 @@ function Compras() {
     <div className="space-y-5">
       <button className="flex items-center gap-1 text-sm font-medium text-azul-700" onClick={() => navegar('/jornada')}><ChevronLeft size={18} /> Jornada</button>
       <div>
-        <p className="sobretitulo">Lista de compras</p>
-        <h1 className="titulo">O que ter em casa</h1>
-        <p className="mt-2 text-sm text-azul-700">{marcados.length} de {total} itens marcados. As marcações ficam salvas neste aparelho.</p>
+        <p className="sobretitulo">Segredo da Insulina · Lista de compras</p>
+        <h1 className="titulo">Lista de Compras dos 21 Dias</h1>
+        <p className="mt-2 text-sm leading-relaxed text-azul-800">
+          Tudo o que você precisa pra fazer os 21 dias completos. Compre uma vez os secos (duram o programa todo) e reponha as frutas e ervas frescas por semana.
+        </p>
+        <p className="mt-2 text-xs text-azul-700">{marcados.length} de {total} itens marcados. As marcações ficam salvas neste aparelho.</p>
+      </div>
+      <div className="card p-4 text-sm leading-relaxed text-azul-800">
+        O programa é um protocolo de <strong className="text-azul-900">bebidas</strong> — os 3 Segredos da Insulina, o shot ao acordar, a água com vinagre ou limão antes das refeições e o chá calmante à noite — somado a uma boa <strong className="text-azul-900">fonte de proteína</strong> nas refeições. Vá marcando cada item conforme coloca no carrinho. ✅
       </div>
       {LISTA_COMPRAS.map((g) => (
         <section key={g.grupo} className="card p-5">
@@ -703,15 +1060,67 @@ function Compras() {
           </ul>
         </section>
       ))}
+      <section className="rounded-2xl bg-gradient-to-br from-azul-900 to-azul-950 p-5 text-white shadow-card">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-ouro-300">O que não pode faltar</p>
+        <p className="mt-1.5 text-sm leading-relaxed text-azul-100">
+          <strong className="text-ouro-300">Chia, psyllium, cacau 100%, linhaça dourada, vinagre de maçã, canela, cúrcuma, gengibre, limão</strong> e o líquido de preferência. Com isso você já faz o protocolo inteiro dos 21 dias.
+        </p>
+      </section>
       {marcados.length > 0 && <button className="btn-linha w-full" onClick={() => { setMarcados([]); store.guardado.set('clube.compras', []) }}>Desmarcar tudo</button>}
     </div>
   )
 }
 
 // ------------------------------------------------------------------ Presentes
+function GrupoMateriais({ rotulo, total, aberto, aoAlternar, icone, itens, rotaBase }) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-ouro-500/30 bg-white shadow-card">
+      <button
+        type="button"
+        onClick={aoAlternar}
+        className="flex w-full items-center gap-3.5 p-4 text-left transition active:bg-creme"
+      >
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-ouro-500/15 text-ouro-600">
+          {icone}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[15px] font-semibold leading-tight text-azul-900">{rotulo}</span>
+          <span className="mt-0.5 block text-xs text-azul-700">{total} materiais · clique para ver</span>
+        </span>
+        <ChevronDown size={20} className={`shrink-0 text-azul-700 transition-transform ${aberto ? 'rotate-180' : ''}`} />
+      </button>
+      {aberto && (
+        <div className="border-t border-ouro-500/15 px-3 pb-3 pt-1">
+          {itens.map((item) => (
+            <Link
+              key={item.id}
+              to={`${rotaBase}/${item.id}`}
+              className="flex w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left transition hover:bg-creme active:bg-creme"
+            >
+              {item.imagem ? (
+                <img src={item.imagem} alt={item.titulo} className="h-9 w-9 shrink-0 rounded-full border border-ouro-500/40 object-cover" />
+              ) : (
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-ouro-300 to-ouro-500 text-azul-950">
+                  <ChevronRight size={15} strokeWidth={2.4} />
+                </span>
+              )}
+              <span className="min-w-0 flex-1 truncate text-sm font-medium text-azul-900">{item.titulo}</span>
+              <ExternalLink size={15} className="shrink-0 text-ouro-600" />
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function Presentes() {
   const [erro, setErro] = useState('')
   const [abrindo, setAbrindo] = useState('')
+  const [clubeAberto, setClubeAberto] = useState(true)
+  const [protAberto, setProtAberto] = useState(false)
+  const [recAberto, setRecAberto] = useState(false)
+  const [ritAberto, setRitAberto] = useState(false)
 
   // Os PDFs ficam protegidos no Supabase: cada clique gera um link temporário para quem está logada.
   async function abrir(p) {
@@ -732,73 +1141,105 @@ function Presentes() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="sobretitulo">Presentes exclusivos</p>
-        <h1 className="titulo">Materiais para você</h1>
-        <p className="mt-1 text-sm text-azul-700">Guias práticos e e-books completos liberados no seu acesso.</p>
+        <p className="sobretitulo">Presentes</p>
+        <h1 className="titulo">Presentes</h1>
+        <p className="mt-1 text-sm text-azul-700">Seus bônus para baixar e usar quando quiser.</p>
       </div>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-azul-700">Guias Interativos do Clube</h2>
-        <Link to="/protocolos" className="card flex items-center gap-4 p-4">
-          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-azul-900 text-ouro-300"><LifeBuoy size={22} /></div>
-          <div className="flex-1">
-            <p className="font-semibold">10 Protocolos de Imprevistos</p>
-            <p className="text-sm text-azul-700">O que fazer quando a rotina sai do plano</p>
-          </div>
-          <ChevronRight size={18} className="text-azul-700" />
-        </Link>
-        <Link to="/receitas" className="card flex items-center gap-4 p-4">
-          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-azul-900 text-ouro-300"><ChefHat size={22} /></div>
-          <div className="flex-1">
-            <p className="font-semibold">14 Receitas Poderosas</p>
-            <p className="text-sm text-azul-700">Chás, shots, águas e bebidas funcionais</p>
-          </div>
-          <ChevronRight size={18} className="text-azul-700" />
-        </Link>
-        <Link to="/rituais" className="card flex items-center gap-4 p-4">
-          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-azul-900 text-ouro-300"><Flame size={22} /></div>
-          <div className="flex-1">
-            <p className="font-semibold">5 Rituais de 7 Minutos</p>
-            <p className="text-sm text-azul-700">Movimentos leves em casa para destravar a queima</p>
-          </div>
-          <ChevronRight size={18} className="text-azul-700" />
-        </Link>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-azul-700">E-books em PDF para baixar</h2>
+        <p className="font-serif text-xs font-semibold uppercase tracking-[0.18em] text-ouro-600">Para baixar</p>
         <Erro>{erro}</Erro>
         <ul className="space-y-3">
           {PRESENTES.map((p) => {
             const corpo = (
               <>
-                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-ouro-300 to-ouro-500 text-azul-950"><FileText size={22} /></div>
-                <div className="flex-1">
-                  <p className="font-semibold">{p.titulo}</p>
-                  <p className="text-sm text-azul-700">{p.arquivo ? p.descricao : 'Em breve'}</p>
+                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-ouro-300 to-ouro-500 text-azul-950 shadow-sm">
+                  <FileText size={22} />
                 </div>
-                {p.arquivo && <ChevronRight size={18} className="text-azul-700" />}
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-azul-900">{p.titulo}</p>
+                  <p className="text-xs text-azul-700">{p.arquivo ? p.descricao : 'Em breve'}</p>
+                </div>
+                {p.arquivo && <ExternalLink size={18} className="shrink-0 text-ouro-600" />}
               </>
             )
             return (
               <li key={p.titulo}>
                 {p.arquivo
-                  ? <button type="button" className="card flex w-full items-center gap-4 p-4 text-left" disabled={abrindo === p.titulo} onClick={() => abrir(p)}>{corpo}</button>
+                  ? <button type="button" className="card flex w-full items-center gap-4 p-4 text-left transition active:scale-[0.99]" disabled={abrindo === p.titulo} onClick={() => abrir(p)}>{corpo}</button>
                   : <div className="card flex items-center gap-4 p-4 opacity-70">{corpo}</div>}
               </li>
             )
           })}
         </ul>
       </section>
+
+      <section className="pt-2">
+        <button
+          type="button"
+          onClick={() => setClubeAberto((v) => !v)}
+          className="flex w-full items-center gap-3.5 rounded-2xl border border-ouro-500/40 bg-gradient-to-br from-azul-800 to-azul-950 p-4 text-left shadow-card transition active:scale-[0.99]"
+        >
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-ouro-300 to-ouro-500 text-azul-950">
+            <Crown size={24} strokeWidth={1.8} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="flex items-center gap-1.5 text-[15px] font-semibold leading-tight text-white">
+              <Sparkles size={16} className="text-ouro-300" /> Materiais exclusivos do Clube
+            </span>
+            <span className="mt-0.5 block text-xs text-ouro-300">
+              {clubeAberto ? 'Toque para recolher' : 'Clique aqui para ver'}
+            </span>
+          </span>
+          <ChevronDown size={20} className={`shrink-0 text-ouro-300 transition-transform ${clubeAberto ? 'rotate-180' : ''}`} />
+        </button>
+
+        {clubeAberto && (
+          <div className="mt-3 space-y-3">
+            <GrupoMateriais
+              rotulo="Protocolos de imprevistos"
+              total={PROTOCOLOS.length}
+              aberto={protAberto}
+              aoAlternar={() => setProtAberto((v) => !v)}
+              icone={<LifeBuoy size={22} />}
+              itens={PROTOCOLOS}
+              rotaBase="/protocolos"
+            />
+            <GrupoMateriais
+              rotulo="Receitas exclusivas Poderosas"
+              total={RECEITAS.length}
+              aberto={recAberto}
+              aoAlternar={() => setRecAberto((v) => !v)}
+              icone={<ChefHat size={22} />}
+              itens={RECEITAS}
+              rotaBase="/receitas"
+            />
+            <GrupoMateriais
+              rotulo="Rituais de 7 minutos"
+              total={RITUAIS.length}
+              aberto={ritAberto}
+              aoAlternar={() => setRitAberto((v) => !v)}
+              icone={<Flame size={22} />}
+              itens={RITUAIS}
+              rotaBase="/rituais"
+            />
+          </div>
+        )}
+      </section>
     </div>
   )
 }
 
 // ------------------------------------------------------------------ Perfil
-function Perfil({ usuario, aoAtualizar, aoSair }) {
+function Perfil({ usuario, plano, aoMudarPlano, aoAtualizar, aoSair }) {
   const [nome, setNome] = useState(usuario.nome)
   const [aviso, setAviso] = useState('')
   const [erro, setErro] = useState('')
+  const [novaSenha, setNovaSenha] = useState('')
+  const [confirmaSenha, setConfirmaSenha] = useState('')
+  const [avisoSenha, setAvisoSenha] = useState('')
+  const [erroSenha, setErroSenha] = useState('')
+  const premium = plano !== 'padrao'
 
   async function salvar(e) {
     e.preventDefault()
@@ -806,11 +1247,25 @@ function Perfil({ usuario, aoAtualizar, aoSair }) {
     try { aoAtualizar(await store.salvarNome(usuario, nome)); setAviso('Nome salvo.') } catch (err) { setErro(err.message) }
   }
 
+  async function mudarSenha(e) {
+    e.preventDefault()
+    setErroSenha(''); setAvisoSenha('')
+    try {
+      await store.alterarSenha(novaSenha, confirmaSenha)
+      setNovaSenha(''); setConfirmaSenha('')
+      setAvisoSenha('Senha alterada com sucesso!')
+    } catch (err) { setErroSenha(err.message) }
+  }
+
   return (
     <div className="space-y-5">
       <div>
         <p className="sobretitulo">Minha conta</p>
-        <h1 className="titulo">Perfil</h1>
+        <h1 className="titulo">{usuario.nome || 'Membro'}</h1>
+        <span className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${premium ? 'border-ouro-500/40 bg-ouro-500/15 text-ouro-600' : 'border-azul-200 bg-azul-900/10 text-azul-900'}`}>
+          {premium && <Crown size={14} />}
+          {premium ? 'Membro do Clube' : 'Acesso padrão'}
+        </span>
       </div>
       <form onSubmit={salvar} className="card space-y-3 p-5">
         <label className="block text-sm font-medium">Nome
@@ -821,6 +1276,42 @@ function Perfil({ usuario, aoAtualizar, aoSair }) {
         {aviso && <p className="text-sm font-medium text-azul-700">{aviso}</p>}
         <button className="btn-azul w-full">Salvar</button>
       </form>
+      <form onSubmit={mudarSenha} className="card space-y-3 p-5">
+        <h2 className="font-semibold text-azul-900">Alterar minha senha</h2>
+        <input className="campo" type="password" placeholder="Nova senha (mínimo 6 caracteres)" value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} />
+        <input className="campo" type="password" placeholder="Confirmar nova senha" value={confirmaSenha} onChange={(e) => setConfirmaSenha(e.target.value)} />
+        <Erro>{erroSenha}</Erro>
+        {avisoSenha && <p className="text-sm font-medium text-azul-700">{avisoSenha}</p>}
+        <button className="btn-azul w-full">Salvar nova senha</button>
+      </form>
+
+      {(store.DEMO || usuario.admin) && (
+        <div className="rounded-2xl border border-dashed border-ouro-500/60 bg-ouro-100/40 p-4 space-y-3">
+          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-ouro-700">
+            <Sparkles size={15} /> Modo de teste — ver como…
+          </p>
+          <div className="grid grid-cols-2 gap-2.5">
+            <button
+              type="button"
+              onClick={() => aoMudarPlano('padrao')}
+              className={`rounded-xl py-2.5 text-sm font-semibold transition ${!premium ? 'bg-azul-900 text-white shadow-sm' : 'border border-ouro-500/40 bg-white text-azul-900'}`}
+            >
+              Acesso Padrão
+            </button>
+            <button
+              type="button"
+              onClick={() => aoMudarPlano('clube')}
+              className={`rounded-xl py-2.5 text-sm font-semibold transition ${premium ? 'bg-gradient-to-r from-ouro-300 to-ouro-500 text-azul-950 shadow-sm' : 'border border-ouro-500/40 bg-white text-azul-900'}`}
+            >
+              Premium
+            </button>
+          </div>
+          <Link to="/clube" className="btn-linha w-full text-xs">
+            <MessageCircle size={16} className="text-ouro-600" /> Ver página de oferta do Clube (/clube)
+          </Link>
+        </div>
+      )}
+
       {usuario.admin && <Link to="/admin" className="btn-linha w-full"><ShieldCheck size={18} className="text-ouro-600" /> Administração</Link>}
       <button className="btn-linha w-full" onClick={aoSair}><LogOut size={18} /> Sair da conta</button>
     </div>
@@ -928,6 +1419,12 @@ function Admin({ usuario }) {
 export default function App() {
   const [usuario, setUsuario] = useState(undefined) // undefined = carregando
   const [feitos, setFeitos] = useState([])
+  const [plano, setPlano] = useState(() => store.guardado.get('clube.plano', 'clube'))
+
+  function mudarPlano(novo) {
+    setPlano(novo)
+    store.guardado.set('clube.plano', novo)
+  }
 
   useEffect(() => { store.sessao().then(setUsuario).catch(() => setUsuario(null)) }, [])
   useEffect(() => {
@@ -951,8 +1448,8 @@ export default function App() {
   return (
     <HashRouter>
       <Routes>
-        <Route element={<Moldura />}>
-          <Route path="/" element={<Inicio usuario={usuario} feitos={feitos} />} />
+        <Route element={<Moldura plano={plano} />}>
+          <Route path="/" element={<Inicio usuario={usuario} feitos={feitos} plano={plano} />} />
           <Route path="/jornada" element={<Jornada feitos={feitos} />} />
           <Route path="/jornada/:n" element={<Dia feitos={feitos} aoMarcar={marcar} />} />
           <Route path="/compras" element={<Compras />} />
@@ -962,10 +1459,11 @@ export default function App() {
           <Route path="/protocolos/:id" element={<Protocolo />} />
           <Route path="/rituais" element={<Rituais />} />
           <Route path="/rituais/:id" element={<Ritual />} />
+          <Route path="/clube" element={<ClubeOferta />} />
           <Route path="/admin" element={<Admin usuario={usuario} />} />
           <Route path="/evolucao" element={<Evolucao usuario={usuario} total={DIAS.length} nomeApp={APP.nome} />} />
           <Route path="/presentes" element={<Presentes />} />
-          <Route path="/perfil" element={<Perfil usuario={usuario} aoAtualizar={setUsuario} aoSair={sair} />} />
+          <Route path="/perfil" element={<Perfil usuario={usuario} plano={plano} aoMudarPlano={mudarPlano} aoAtualizar={setUsuario} aoSair={sair} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
