@@ -23,6 +23,10 @@ const PT = {
   preencha: 'Preencha o que quiser e toque em salvar.',
   peso: 'Peso',
   fotoDoDia: 'Foto do dia',
+  medidas: 'Medidas (opcional)',
+  cintura: 'Cintura',
+  quadril: 'Quadril',
+  medidaInvalida: 'Informe medidas válidas, em centímetros.',
   adicionarFoto: 'Adicionar foto',
   trocarFoto: 'Trocar foto',
   removerFoto: 'Remover foto',
@@ -61,6 +65,10 @@ const ES = {
   preencha: 'Completa lo que quieras y toca guardar.',
   peso: 'Peso',
   fotoDoDia: 'Foto del día',
+  medidas: 'Medidas (opcional)',
+  cintura: 'Cintura',
+  quadril: 'Cadera',
+  medidaInvalida: 'Ingresa medidas válidas, en centímetros.',
   adicionarFoto: 'Agregar foto',
   trocarFoto: 'Cambiar foto',
   removerFoto: 'Quitar foto',
@@ -122,6 +130,8 @@ function Grafico({ pontos }) {
 function Registrar({ usuario, dia, registro, aoFechar, aoSalvar }) {
   const [peso, setPeso] = useState(registro?.peso != null ? kg(registro.peso) : '')
   const [humor, setHumor] = useState(registro?.humor || '')
+  const [cintura, setCintura] = useState(registro?.cintura != null ? kg(registro.cintura) : '')
+  const [quadril, setQuadril] = useState(registro?.quadril != null ? kg(registro.quadril) : '')
   const [previa, setPrevia] = useState(registro?.fotoUrl || '')
   const [arquivo, setArquivo] = useState(null) // nova foto escolhida
   const [removerFoto, setRemoverFoto] = useState(false)
@@ -153,11 +163,14 @@ function Registrar({ usuario, dia, registro, aoFechar, aoSalvar }) {
     const texto = String(peso).replace(',', '.').trim()
     const numero = texto === '' ? null : Number(texto)
     if (numero !== null && !(numero > 0 && numero < 500)) return setErro(T.pesoInvalido)
+    const cm = (v) => { const x = String(v).replace(',', '.').trim(); return x === '' ? null : Number(x) }
+    const cint = cm(cintura), quad = cm(quadril)
+    if ([cint, quad].some((v) => v !== null && !(v > 20 && v < 300))) return setErro(T.medidaInvalida)
     const temFoto = arquivo || (registro?.foto && !removerFoto)
-    if (numero === null && !humor && !temFoto) return setErro(T.vazio)
+    if (numero === null && !humor && !temFoto && cint === null && quad === null) return setErro(T.vazio)
     setEnviando(true)
     try {
-      await store.salvarDiario(usuario, dia, { peso: numero, humor: humor || null, arquivo, removerFoto })
+      await store.salvarDiario(usuario, dia, { peso: numero, humor: humor || null, cintura: cint, quadril: quad, arquivo, removerFoto })
       await aoSalvar()
       aoFechar()
     } catch (err) { setErro(err.message) } finally { setEnviando(false) }
@@ -182,6 +195,19 @@ function Registrar({ usuario, dia, registro, aoFechar, aoSalvar }) {
           <div className="relative">
             <input id="evo-peso" className="campo py-4 pr-14 text-2xl font-semibold" inputMode="decimal" placeholder="00,0" value={peso} onChange={(e) => setPeso(e.target.value)} />
             <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 font-semibold text-azul-700">kg</span>
+          </div>
+        </div>
+
+        <div>
+          <p className="mb-2 text-sm font-semibold">{T.medidas}</p>
+          <div className="grid grid-cols-2 gap-3">
+            {[[T.cintura, cintura, setCintura, 'evo-cintura'], [T.quadril, quadril, setQuadril, 'evo-quadril']].map(([rotulo, valor, mudar, id]) => (
+              <div key={id} className="relative">
+                <label htmlFor={id} className="sr-only">{rotulo}</label>
+                <input id={id} className="campo pr-10" inputMode="decimal" placeholder={rotulo} value={valor} onChange={(e) => mudar(e.target.value)} />
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-azul-700">cm</span>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -280,7 +306,7 @@ export default function Evolucao({ usuario, total, nomeApp }) {
         <ul className="space-y-3">
           {Array.from({ length: total }, (_, i) => i + 1).map((n) => {
             const r = porDia[n]
-            const resumo = r ? [r.peso != null && `${kg(r.peso)} kg`, r.humor && `${EMOJI[r.humor]} ${T.humores[r.humor]}`, r.foto && !r.fotoUrl && T.comFoto].filter(Boolean).join(' · ') : T.naoRegistrado
+            const resumo = r ? [r.peso != null && `${kg(r.peso)} kg`, r.cintura != null && `${T.cintura} ${kg(r.cintura)}`, r.quadril != null && `${T.quadril} ${kg(r.quadril)}`, r.humor && `${EMOJI[r.humor]} ${T.humores[r.humor]}`, r.foto && !r.fotoUrl && T.comFoto].filter(Boolean).join(' · ') : T.naoRegistrado
             return (
               <li key={n}>
                 <button type="button" onClick={() => setAberto(n)}

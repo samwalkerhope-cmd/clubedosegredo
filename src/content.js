@@ -2067,6 +2067,7 @@ export const RECEITAS = [
 export const RITUAIS = [
   {
     "id": "ritual-01",
+    "imagem": "/materiais/rituais-01.jpg",
     "tag": "🩸 Circulação · 10–15 min · 4 exercícios",
     "titulo": "Ative sua Circulação",
     "descricao": "Movimentos simples para ajudar seu corpo a desinchar, aliviar a sensação de pernas pesadas e aumentar sua disposição em poucos minutos.",
@@ -2137,6 +2138,7 @@ export const RITUAIS = [
   },
   {
     "id": "ritual-02",
+    "imagem": "/materiais/rituais-02.jpg",
     "tag": "💧 Desinchar · 10–15 min · 4 exercícios",
     "titulo": "Desinche de Vez",
     "descricao": "Quando o corpo está menos inchado, você se sente mais leve, mais confortável e até as roupas vestem melhor.",
@@ -2207,6 +2209,7 @@ export const RITUAIS = [
   },
   {
     "id": "ritual-03",
+    "imagem": "/materiais/rituais-03.jpg",
     "tag": "💆 Dores · 10–15 min · 4 exercícios",
     "titulo": "Alívio para as Dores do Corpo",
     "descricao": "Movimentos suaves para reduzir a rigidez do corpo e ajudar você a se sentir mais confortável durante o dia.",
@@ -2277,6 +2280,7 @@ export const RITUAIS = [
   },
   {
     "id": "ritual-04",
+    "imagem": "/materiais/rituais-04.jpg",
     "tag": "🌿 Intestino · 10–15 min · 4 exercícios",
     "titulo": "Intestino em Movimento",
     "descricao": "Uma sequência simples para ajudar o intestino a funcionar melhor e reduzir aquela sensação de barriga pesada e estufada.",
@@ -2347,6 +2351,7 @@ export const RITUAIS = [
   },
   {
     "id": "ritual-05",
+    "imagem": "/materiais/rituais-05.jpg",
     "tag": "🔥 Emagrecimento · 10–15 min · 4 exercícios",
     "titulo": "Mova-se e Emagreça",
     "descricao": "Alguns minutos de movimento ajudam a gastar energia, melhorar a disposição e apoiar o seu processo de emagrecimento.",

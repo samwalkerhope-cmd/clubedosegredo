@@ -139,6 +139,46 @@ create policy "fotos proprias" on storage.objects for all to authenticated
   using (bucket_id = 'fotos' and (storage.foldername(name))[1] = auth.uid()::text)
   with check (bucket_id = 'fotos' and (storage.foldername(name))[1] = auth.uid()::text);
 
+-- ---------------------------------------------------------------- plano Premium, medidas, redefinição de senha
+-- plano: 'padrao' ou 'clube' (Premium). Só o admin altera, pela função definir_plano (a cliente não consegue mudar o próprio).
+alter table public.profiles add column if not exists plano text not null default 'padrao' check (plano in ('padrao', 'clube'));
+update public.profiles set plano = 'clube' where admin;
+
+alter table public.diario add column if not exists cintura numeric(5,1);
+alter table public.diario add column if not exists quadril numeric(5,1);
+
+create or replace function public.definir_plano(p_id uuid, p_plano text) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not public.eh_admin() then raise exception 'sem permissão'; end if;
+  if p_plano not in ('padrao', 'clube') then raise exception 'plano inválido'; end if;
+  update public.profiles set plano = p_plano where id = p_id;
+end $$;
+
+-- O admin define uma senha nova para a cliente que esqueceu (o login por telefone não tem e-mail para recuperação).
+create or replace function public.admin_redefinir_senha(p_id uuid, p_senha text) returns void
+language plpgsql security definer set search_path = public, extensions as $$
+begin
+  if not public.eh_admin() then raise exception 'sem permissão'; end if;
+  if length(coalesce(p_senha, '')) < 6 then raise exception 'senha muito curta'; end if;
+  update auth.users set encrypted_password = extensions.crypt(p_senha, extensions.gen_salt('bf')), updated_at = now() where id = p_id;
+  if not found then raise exception 'conta não encontrada'; end if;
+end $$;
+
+-- Quem pode chamar cada função pela API (corrige os avisos do Security Advisor).
+revoke execute on function public.conferir_acesso() from public, anon, authenticated;
+revoke execute on function public.criar_perfil() from public, anon, authenticated;
+grant execute on function public.conferir_acesso() to supabase_auth_admin;
+grant execute on function public.criar_perfil() to supabase_auth_admin;
+revoke execute on function public.eh_admin() from public, anon;
+revoke execute on function public.tem_acesso() from public, anon;
+revoke execute on function public.definir_plano(uuid, text) from public, anon;
+revoke execute on function public.admin_redefinir_senha(uuid, text) from public, anon;
+grant execute on function public.eh_admin() to authenticated;
+grant execute on function public.tem_acesso() to authenticated;
+grant execute on function public.definir_plano(uuid, text) to authenticated;
+grant execute on function public.admin_redefinir_senha(uuid, text) to authenticated;
+
 -- ---------------------------------------------------------------- primeira administradora
 -- 1) Libere o seu próprio telefone (troque pelo seu número, só dígitos, com DDD):
 --      insert into public.acessos (telefone, nome) values ('85999999999', 'Seu nome');

@@ -2065,6 +2065,7 @@ export const RECEITAS = [
 export const RITUAIS = [
   {
     "id": "ritual-01",
+    "imagem": "/materiais/rituais-01.jpg",
     "tag": "🩸 Circulación · 10–15 min · 4 ejercicios",
     "titulo": "Activa tu Circulación",
     "descricao": "Movimientos simples para ayudar a tu cuerpo a desinflamarse, aliviar la sensación de piernas pesadas y aumentar tu energía en pocos minutos.",
@@ -2135,6 +2136,7 @@ export const RITUAIS = [
   },
   {
     "id": "ritual-02",
+    "imagem": "/materiais/rituais-02.jpg",
     "tag": "💧 Desinflamar · 10–15 min · 4 ejercicios",
     "titulo": "Desinflámate de una Vez",
     "descricao": "Cuando el cuerpo está menos hinchado, te sientes más ligera, más cómoda y hasta la ropa te queda mejor.",
@@ -2205,6 +2207,7 @@ export const RITUAIS = [
   },
   {
     "id": "ritual-03",
+    "imagem": "/materiais/rituais-03.jpg",
     "tag": "💆 Dolores · 10–15 min · 4 ejercicios",
     "titulo": "Alivio para los Dolores del Cuerpo",
     "descricao": "Movimientos suaves para reducir la rigidez del cuerpo y ayudarte a sentirte más cómoda durante el día.",
@@ -2275,6 +2278,7 @@ export const RITUAIS = [
   },
   {
     "id": "ritual-04",
+    "imagem": "/materiais/rituais-04.jpg",
     "tag": "🌿 Intestino · 10–15 min · 4 ejercicios",
     "titulo": "Intestino en Movimiento",
     "descricao": "Una secuencia simple para ayudar al intestino a funcionar mejor y reducir esa sensación de vientre pesado e hinchado.",
@@ -2345,6 +2349,7 @@ export const RITUAIS = [
   },
   {
     "id": "ritual-05",
+    "imagem": "/materiais/rituais-05.jpg",
     "tag": "🔥 Adelgazar · 10–15 min · 4 ejercicios",
     "titulo": "Muévete y Adelgaza",
     "descricao": "Unos minutos de movimiento ayudan a gastar energía, mejorar el ánimo y apoyar tu proceso de pérdida de peso.",

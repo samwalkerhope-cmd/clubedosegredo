@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { HashRouter, Routes, Route, Navigate, NavLink, Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { Crown, Map, Gift, LineChart, User, Check, ChevronLeft, ChevronRight, ChevronDown, MessageCircle, LogOut, FileText, Trash2, ShoppingBasket, ShieldCheck, ChefHat, Clock, Sparkles, Flame, LifeBuoy, Settings, ExternalLink, Salad, X, Volume2 } from 'lucide-react'
+import { Crown, Map, Gift, LineChart, User, Check, ChevronLeft, ChevronRight, ChevronDown, MessageCircle, LogOut, FileText, Trash2, ShoppingBasket, ShieldCheck, ChefHat, Clock, Sparkles, Flame, LifeBuoy, Settings, ExternalLink, Salad, X, Volume2, Lock, KeyRound } from 'lucide-react'
 import { APP, OFERTAS, DIAS, SEMANAS, SEGREDOS, PRESENTES, LISTA_COMPRAS, RECEITAS, CATEGORIAS, RITUAIS, PROTOCOLOS, RECEITA_DO_DIA } from './content'
 import * as store from './store'
 import Evolucao from './Evolucao'
@@ -68,6 +68,12 @@ function Entrada({ aoEntrar }) {
               {criando ? 'Entrar' : 'Criar agora'}
             </button>
           </p>
+          {!criando && APP.whatsapp && (
+            <a className="block text-center text-sm font-medium text-azul-700 underline" target="_blank" rel="noreferrer"
+              href={`https://wa.me/${APP.whatsapp}?text=${encodeURIComponent('Olá! Esqueci minha senha do Clube. Meu telefone: ' + (telefone || ''))}`}>
+              Esqueci minha senha
+            </a>
+          )}
         </form>
       </div>
     </div>
@@ -220,6 +226,7 @@ const ESTADO_INICIAL_SALADA = { acessos: 0, shows: 0, last: 0, fechada: false }
 
 function OfertaSalada() {
   const [aberta, setAberta] = useState(false)
+  const [aviso, setAviso] = useState('')
   const s = OFERTAS.salada
 
   useEffect(() => {
@@ -235,9 +242,11 @@ function OfertaSalada() {
   }, [])
 
   function comprar() {
+    // Sem link de checkout configurado: avisa e não marca a oferta como encerrada.
+    if (!s.checkoutUrl) return setAviso('O link de compra ainda não está disponível. Tente novamente mais tarde.')
     const atual = store.guardado.get(CHAVE_OFERTA_SALADA, ESTADO_INICIAL_SALADA)
     store.guardado.set(CHAVE_OFERTA_SALADA, { ...atual, fechada: true })
-    if (s.checkoutUrl) window.open(s.checkoutUrl, '_blank', 'noopener,noreferrer')
+    window.open(s.checkoutUrl, '_blank', 'noopener,noreferrer')
     setAberta(false)
   }
 
@@ -306,6 +315,7 @@ function OfertaSalada() {
               >
                 {s.botao}
               </button>
+              {aviso && <p role="alert" className="mt-2 rounded-xl bg-red-50 px-4 py-3 text-center text-sm text-red-700">{aviso}</p>}
               <button
                 type="button"
                 onClick={() => setAberta(false)}
@@ -325,10 +335,12 @@ function OfertaSalada() {
 function ClubeOferta() {
   const navegar = useNavigate()
   const c = OFERTAS.clube
+  const [aviso, setAviso] = useState('')
   const iconesBeneficios = [LifeBuoy, MessageCircle, LineChart]
 
   function comprar() {
-    if (c.checkoutUrl) window.open(c.checkoutUrl, '_blank', 'noopener,noreferrer')
+    if (!c.checkoutUrl) return setAviso('O link de compra ainda não está disponível. Tente novamente mais tarde.')
+    window.open(c.checkoutUrl, '_blank', 'noopener,noreferrer')
   }
 
   return (
@@ -402,6 +414,7 @@ function ClubeOferta() {
         <MessageCircle size={20} className="shrink-0" />
         <span>{c.botao}</span>
       </button>
+      {aviso && <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-center text-sm text-red-700">{aviso}</p>}
     </div>
   )
 }
@@ -1327,6 +1340,10 @@ function Admin({ usuario }) {
   const [nome, setNome] = useState('')
   const [erro, setErro] = useState('')
 
+  const [aviso, setAviso] = useState('')
+  const [senhaDe, setSenhaDe] = useState(null) // id da cliente com o campo de senha aberto
+  const [novaSenha, setNovaSenha] = useState('')
+
   async function carregar() {
     try {
       const [a, m] = await Promise.all([store.acessos(), store.membros()])
@@ -1346,6 +1363,16 @@ function Admin({ usuario }) {
   async function remover(tel) {
     setErro('')
     try { await store.removerAcesso(tel); await carregar() } catch (err) { setErro(err.message) }
+  }
+
+  async function alternarPlano(p) {
+    setErro(''); setAviso('')
+    try { await store.definirPlano(p.id, p.plano === 'clube' ? 'padrao' : 'clube'); setAviso('Plano atualizado.'); await carregar() } catch (err) { setErro(err.message) }
+  }
+
+  async function salvarSenha(p) {
+    setErro(''); setAviso('')
+    try { await store.redefinirSenha(p.id, novaSenha); setSenhaDe(null); setNovaSenha(''); setAviso('Senha redefinida. Avise a cliente.') } catch (err) { setErro(err.message) }
   }
 
   const concluiram = pessoas.filter((p) => p.dias >= DIAS.length).length
@@ -1374,6 +1401,7 @@ function Admin({ usuario }) {
         <input className="campo" type="tel" inputMode="numeric" placeholder="Telefone com DDD (só números)" value={telefone} onChange={(e) => setTelefone(e.target.value)} />
         <input className="campo" placeholder="Nome (opcional)" value={nome} onChange={(e) => setNome(e.target.value)} />
         <Erro>{erro}</Erro>
+        {aviso && <p className="text-sm font-medium text-azul-700">{aviso}</p>}
         <button className="btn-azul w-full">Liberar</button>
       </form>
 
@@ -1405,6 +1433,23 @@ function Admin({ usuario }) {
                   <p className="text-azul-700">{p.dias} de {DIAS.length} dias</p>
                 </div>
                 <p className="text-azul-700">{p.telefone}</p>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${p.plano === 'clube' ? 'bg-ouro-100 text-ouro-700' : 'bg-azul-100 text-azul-800'}`}>
+                    {p.plano === 'clube' ? 'Premium' : 'Padrão'}{p.admin ? ' · Admin' : ''}
+                  </span>
+                  <button type="button" className="rounded-lg border border-azul-200 px-2.5 py-1 text-xs font-medium hover:bg-ouro-100" onClick={() => alternarPlano(p)}>
+                    {p.plano === 'clube' ? 'Voltar para Padrão' : 'Liberar Premium'}
+                  </button>
+                  <button type="button" className="inline-flex items-center gap-1 rounded-lg border border-azul-200 px-2.5 py-1 text-xs font-medium hover:bg-azul-100" onClick={() => { setSenhaDe(senhaDe === p.id ? null : p.id); setNovaSenha('') }}>
+                    <KeyRound size={13} /> Redefinir senha
+                  </button>
+                </div>
+                {senhaDe === p.id && (
+                  <div className="mt-2 flex gap-2">
+                    <input className="campo py-2 text-sm" type="text" autoComplete="off" placeholder="Nova senha (mínimo 6)" value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} />
+                    <button type="button" className="btn-azul shrink-0 px-3 py-2 text-xs" onClick={() => salvarSenha(p)}>Salvar senha</button>
+                  </div>
+                )}
                 <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-azul-100"><div className="h-full rounded-full bg-ouro-500" style={{ width: `${(p.dias / DIAS.length) * 100}%` }} /></div>
               </li>
             ))}
@@ -1415,15 +1460,36 @@ function Admin({ usuario }) {
   )
 }
 
+// ------------------------------------------------------------------ Conteúdo exclusivo do Premium
+// Telas envolvidas por <SoPremium> nas rotas (hoje: Protocolos e Evolução). Para liberar uma tela para todas,
+// basta tirar o <SoPremium> da rota correspondente lá embaixo, no App.
+function SoPremium({ plano, children }) {
+  if (plano !== 'padrao') return children
+  return (
+    <div className="space-y-5 py-6 text-center">
+      <div className="mx-auto grid h-20 w-20 place-items-center rounded-full border-2 border-ouro-500 bg-azul-900 text-ouro-300 shadow-card">
+        <Lock size={32} strokeWidth={1.7} />
+      </div>
+      <p className="sobretitulo">Exclusivo do Clube Premium</p>
+      <h1 className="titulo text-2xl">Este conteúdo é do acesso Premium</h1>
+      <p className="mx-auto max-w-[300px] text-sm leading-relaxed text-azul-800">Ele faz parte do Clube, junto com a Dra. do Segredo acompanhando você no WhatsApp.</p>
+      <Link to="/clube" className="btn-ouro w-full"><Crown size={18} /> Conhecer o Clube</Link>
+      <Link to="/jornada" className="block text-sm font-medium text-azul-700 underline">Voltar para a jornada</Link>
+    </div>
+  )
+}
+
 // ------------------------------------------------------------------ App
 export default function App() {
   const [usuario, setUsuario] = useState(undefined) // undefined = carregando
   const [feitos, setFeitos] = useState([])
-  const [plano, setPlano] = useState(() => store.guardado.get('clube.plano', 'clube'))
+  // O plano real vem do banco (o admin libera no painel). Admins podem simular o outro plano no Perfil (modo de teste).
+  const [planoTeste, setPlanoTeste] = useState(() => store.guardado.get('clube.plano.teste', null))
+  const plano = (usuario?.admin || store.DEMO) && planoTeste ? planoTeste : (usuario?.plano || 'padrao')
 
   function mudarPlano(novo) {
-    setPlano(novo)
-    store.guardado.set('clube.plano', novo)
+    setPlanoTeste(novo)
+    store.guardado.set('clube.plano.teste', novo)
   }
 
   useEffect(() => { store.sessao().then(setUsuario).catch(() => setUsuario(null)) }, [])
@@ -1455,13 +1521,13 @@ export default function App() {
           <Route path="/compras" element={<Compras />} />
           <Route path="/receitas" element={<Receitas />} />
           <Route path="/receitas/:id" element={<Receita />} />
-          <Route path="/protocolos" element={<Protocolos />} />
-          <Route path="/protocolos/:id" element={<Protocolo />} />
+          <Route path="/protocolos" element={<SoPremium plano={plano}><Protocolos /></SoPremium>} />
+          <Route path="/protocolos/:id" element={<SoPremium plano={plano}><Protocolo /></SoPremium>} />
           <Route path="/rituais" element={<Rituais />} />
           <Route path="/rituais/:id" element={<Ritual />} />
           <Route path="/clube" element={<ClubeOferta />} />
           <Route path="/admin" element={<Admin usuario={usuario} />} />
-          <Route path="/evolucao" element={<Evolucao usuario={usuario} total={DIAS.length} nomeApp={APP.nome} />} />
+          <Route path="/evolucao" element={<SoPremium plano={plano}><Evolucao usuario={usuario} total={DIAS.length} nomeApp={APP.nome} /></SoPremium>} />
           <Route path="/presentes" element={<Presentes />} />
           <Route path="/perfil" element={<Perfil usuario={usuario} plano={plano} aoMudarPlano={mudarPlano} aoAtualizar={setUsuario} aoSair={sair} />} />
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -23,6 +23,9 @@ const ES = {
   'Não foi possível salvar o dia.': 'No se pudo guardar el día.',
   'Não foi possível carregar seus registros.': 'No se pudieron cargar tus registros.',
   'Não foi possível enviar a foto.': 'No se pudo enviar la foto.',
+  'Seu acesso foi encerrado. Fale com o suporte.': 'Tu acceso terminó. Habla con soporte.',
+  'Não foi possível alterar o plano.': 'No se pudo cambiar el plan.',
+  'Não foi possível redefinir a senha.': 'No se pudo restablecer la contraseña.',
   'Não foi possível salvar o registro.': 'No se pudo guardar el registro.',
   'Não foi possível apagar.': 'No se pudo borrar.',
   'Não foi possível abrir este material. Tente de novo ou fale com o suporte.': 'No se pudo abrir este material. Inténtalo de nuevo o contacta a soporte.',
@@ -64,16 +67,29 @@ export const guardado = local
 
 async function comAdmin(u) {
   if (!u) return null
-  const { data } = await sb.from('profiles').select('admin').eq('id', u.id).maybeSingle()
-  return { ...u, admin: !!data?.admin }
+  const { data } = await sb.from('profiles').select('admin, plano').eq('id', u.id).maybeSingle()
+  // plano: 'clube' (Premium) ou 'padrao'. Quem define é o admin, no painel.
+  return { ...u, admin: !!data?.admin, plano: data?.plano || 'padrao' }
 }
-const demoUsuario = (u) => u && { ...u, admin: true } // no modo demonstração o painel fica visível
+const demoUsuario = (u) => u && { ...u, admin: true, plano: 'clube' } // no modo demonstração o painel fica visível
+
+// Confere se o telefone da pessoa continua na lista de acessos (admins sempre têm acesso).
+// Se a consulta falhar por instabilidade, não expulsa ninguém.
+async function temAcesso() {
+  const { data, error } = await sb.rpc('tem_acesso')
+  return error ? true : !!data
+}
 
 // ---- sessão ----
 export async function sessao() {
   if (DEMO) return demoUsuario(local.get('clube.usuario', null))
   const { data } = await sb.auth.getSession()
-  return comAdmin(usuarioDe(data.session?.user))
+  const u = usuarioDe(data.session?.user)
+  if (u && !(await temAcesso())) {
+    await sb.auth.signOut()
+    return null
+  }
+  return comAdmin(u)
 }
 
 export async function entrar(telefone, senha) {
@@ -85,6 +101,10 @@ export async function entrar(telefone, senha) {
   }
   const { data, error } = await sb.auth.signInWithPassword({ email: emailDe(telefone), password: senha })
   if (error) throw new Error(msg('Telefone ou senha incorretos.'))
+  if (!(await temAcesso())) {
+    await sb.auth.signOut()
+    throw new Error(msg('Seu acesso foi encerrado. Fale com o suporte.'))
+  }
   return comAdmin(usuarioDe(data.user))
 }
 
@@ -164,7 +184,7 @@ const paraDataUrl = (blob) => new Promise((ok, falha) => {
 
 export async function diario(usuario) {
   if (DEMO) return local.get('clube.diario', []).map((r) => ({ ...r, fotoUrl: r.foto || '' }))
-  const { data, error } = await sb.from('diario').select('dia, peso, humor, foto, atualizado_em').eq('user_id', usuario.id).order('dia')
+  const { data, error } = await sb.from('diario').select('dia, peso, humor, cintura, quadril, foto, atualizado_em').eq('user_id', usuario.id).order('dia')
   if (error) throw new Error(msg('Não foi possível carregar seus registros.'))
   const comFoto = data.filter((r) => r.foto)
   let links = {}
@@ -176,16 +196,16 @@ export async function diario(usuario) {
   return data.map((r) => ({ ...r, fotoUrl: links[r.foto] ? `${links[r.foto]}&v=${Date.parse(r.atualizado_em)}` : '' }))
 }
 
-export async function salvarDiario(usuario, dia, { peso, humor, arquivo, removerFoto }) {
+export async function salvarDiario(usuario, dia, { peso, humor, cintura = null, quadril = null, arquivo, removerFoto }) {
   if (DEMO) {
     const atual = local.get('clube.diario', [])
     const antigo = atual.find((r) => r.dia === dia)
     const foto = arquivo ? await paraDataUrl(arquivo) : removerFoto ? null : antigo?.foto || null
-    local.set('clube.diario', [...atual.filter((r) => r.dia !== dia), { dia, peso, humor, foto }].sort((a, b) => a.dia - b.dia))
+    local.set('clube.diario', [...atual.filter((r) => r.dia !== dia), { dia, peso, humor, cintura, quadril, foto }].sort((a, b) => a.dia - b.dia))
     return
   }
   const caminho = caminhoFoto(usuario, dia)
-  const item = { user_id: usuario.id, dia, peso, humor, atualizado_em: new Date().toISOString() }
+  const item = { user_id: usuario.id, dia, peso, humor, cintura, quadril, atualizado_em: new Date().toISOString() }
   if (arquivo) {
     const { error } = await sb.storage.from('fotos').upload(caminho, arquivo, { upsert: true, contentType: 'image/jpeg' })
     if (error) throw new Error(msg('Não foi possível enviar a foto.'))
@@ -240,14 +260,29 @@ export async function removerAcesso(telefone) {
 export async function membros() {
   if (DEMO) {
     const u = local.get('clube.usuario', null)
-    return u ? [{ id: u.id, nome: u.nome, telefone: u.telefone, dias: local.get('clube.progresso', []).length }] : []
+    return u ? [{ id: u.id, nome: u.nome, telefone: u.telefone, plano: 'clube', admin: true, dias: local.get('clube.progresso', []).length }] : []
   }
   const [perfis, prog] = await Promise.all([
-    sb.from('profiles').select('id, nome, telefone, criado_em').order('criado_em', { ascending: false }),
+    sb.from('profiles').select('id, nome, telefone, criado_em, plano, admin').order('criado_em', { ascending: false }),
     sb.from('progress').select('user_id'),
   ])
   if (perfis.error || prog.error) throw new Error(msg('Não foi possível carregar os membros.'))
   const conta = {}
   for (const r of prog.data) conta[r.user_id] = (conta[r.user_id] || 0) + 1
   return perfis.data.map((p) => ({ ...p, dias: conta[p.id] || 0 }))
+}
+
+// Libera ou retira o Premium de uma cliente (só funciona para admins; o banco confere).
+export async function definirPlano(id, plano) {
+  if (DEMO) return
+  const { error } = await sb.rpc('definir_plano', { p_id: id, p_plano: plano })
+  if (error) throw new Error(msg('Não foi possível alterar o plano.'))
+}
+
+// Admin define uma senha nova para a cliente que esqueceu (o banco confere se quem pede é admin).
+export async function redefinirSenha(id, senha) {
+  if (!senha || senha.length < 6) throw new Error(msg('A senha precisa ter pelo menos 6 caracteres.'))
+  if (DEMO) return
+  const { error } = await sb.rpc('admin_redefinir_senha', { p_id: id, p_senha: senha })
+  if (error) throw new Error(msg('Não foi possível redefinir a senha.'))
 }
