@@ -2421,476 +2421,78 @@ export const RITUAIS = [
   }
 ]
 
+// Vitrine dos Protocolos (pública). O conteúdo completo de cada protocolo fica no banco
+// (tabela protocolos_conteudo) e só é entregue para quem é Premium. Veja supabase/schema.sql.
 export const PROTOCOLOS = [
   {
     "id": "protocolo-01-manha",
     "imagem": "/materiais/protocolo-01-manha.jpg",
     "tag": "☀️ Mañana · 15 a 20 min",
     "titulo": "Protocolo de la Mañana",
-    "descricao": "Los primeros 20 minutos del día determinan cómo se va a comportar tu insulina en las próximas 12 horas.",
-    "acontece": "Te despiertas sin tiempo, sin energía, sin saber qué comer. Y entonces improvisas. Y la improvisación casi siempre sabotea.",
-    "solucao": "Con 3 decisiones simples apenas te despiertas, pones la insulina en su lugar y sigues el día sin culpa y sin hambre a deshoras.",
-    "frase": "No necesitas una mañana perfecta. Solo necesitas unos minutos para empezar el día sin salir en piloto automático.",
-    "passos": [
-      {
-        "icone": "💧",
-        "numero": "01",
-        "titulo": "Antes que nada: agua",
-        "texto": "Toma 1 vaso de agua apenas te despiertes, antes del café, antes del celular. El cuerpo pasa de 7 a 8 horas sin agua. Rehidratarte primero mejora el metabolismo, reduce el cortisol matutino y disminuye el hambre a primera hora.",
-        "dica": "Deja el vaso lleno en la mesa de noche la noche anterior. Sin esfuerzo."
-      },
-      {
-        "icone": "🥣",
-        "numero": "02",
-        "titulo": "Desayuno con proteína y fibra",
-        "texto": "Evita empezar con pan, tortillas, fruta sola o galletas. Esos alimentos disparan la insulina a primera hora y generan hambre en 1 hora. Prefiere huevos, yogur natural, queso, aguacate, avena con chía.",
-        "dica": "Si no tienes tiempo: 2 huevos revueltos en 3 minutos. Simple, económico y te mantiene sin hambre hasta el almuerzo."
-      },
-      {
-        "icone": "🚶",
-        "numero": "03",
-        "titulo": "5 minutos de movimiento",
-        "texto": "No necesitas entrenar. Solo 5 minutos de caminata ligera, marcha en el lugar o estiramiento ya activan la circulación, despiertan el metabolismo y reducen la resistencia a la insulina del día.",
-        "dica": "Hazlo mientras se calienta el café. Todas tenemos 5 minutos."
-      },
-      {
-        "icone": "📵",
-        "numero": "04",
-        "titulo": "El celular, después del desayuno",
-        "texto": "Mirar el celular antes de comer aumenta el cortisol a primera hora. El cortisol alto eleva el azúcar en la sangre incluso sin comer nada. Deja el celular para después del desayuno.",
-        "dica": "Parece que no tiene que ver, pero tiene un impacto real en la insulina. Pruébalo por 7 días y observa la diferencia en tu nivel de energía."
-      }
-    ],
-    "evitar": [
-      "Saltarte el desayuno creyendo que así adelgazas más",
-      "Empezar con jugo de fruta o fruta sola",
-      "Mirar el celular antes de comer",
-      "Tomar café en ayunas si sientes ansiedad o palpitaciones"
-    ],
-    "lembre": "Una buena mañana no necesita ser perfecta. Necesita ser constante."
+    "descricao": "Los primeros 20 minutos del día determinan cómo se va a comportar tu insulina en las próximas 12 horas."
   },
   {
     "id": "protocolo-02-noite",
     "imagem": "/materiais/protocolo-02-noite.jpg",
     "tag": "🌙 Noche · últimas 2 horas antes de dormir",
     "titulo": "Protocolo de la Noche",
-    "descricao": "Lo que haces en las 2 horas antes de dormir impacta directamente en la insulina del día siguiente.",
-    "acontece": "Llegas cansada, picas lo que tengas enfrente, te quedas en el celular hasta tarde y duermes mal. Al día siguiente la insulina está alta, el hambre aparece temprano y el ciclo se repite.",
-    "solucao": "4 acciones simples en las últimas 2 horas del día protegen el sueño, bajan la insulina en ayunas y hacen que te despiertes más ligera.",
-    "frase": "Una buena noche empieza mucho antes de acostarte. Pequeños ajustes pueden ayudarte a dormir mejor y a despertar con más energía.",
-    "passos": [
-      {
-        "icone": "🍽️",
-        "numero": "01",
-        "titulo": "Cena ligera y a la hora correcta",
-        "texto": "Intenta cenar al menos 2 horas antes de dormir. El cuerpo no digiere bien acostado, y la insulina elevada por la noche perjudica la quema de grasa que ocurre durante el sueño. Prefiere proteína ligera con verduras.",
-        "dica": "Si sientes hambre después de la cena, toma un té de manzanilla o toronjil. Generalmente es ansiedad, no hambre real."
-      },
-      {
-        "icone": "📱",
-        "numero": "02",
-        "titulo": "Pantallas apagadas 1 hora antes de dormir",
-        "texto": "La luz azul del celular inhibe la melatonina, la hormona que controla el sueño. Sin melatonina, el cortisol sube. Y cortisol alto por la noche es insulina alta por la mañana. Cambia la pantalla por un libro, música o una conversación.",
-        "dica": "Usa el modo descanso del celular a partir de las 21:00. Reduce la luz azul y ya ayuda."
-      },
-      {
-        "icone": "🌡️",
-        "numero": "03",
-        "titulo": "Habitación fresca y oscura",
-        "texto": "La temperatura ideal para dormir está entre 18 y 20 grados. Las habitaciones calurosas o con luz perjudican el sueño profundo. El sueño superficial aumenta el cortisol y, en consecuencia, la insulina del día siguiente.",
-        "dica": "Unas medias o una manta ligera en los pies ayudan a redistribuir el calor corporal y facilitan conciliar el sueño."
-      },
-      {
-        "icone": "✍️",
-        "numero": "04",
-        "titulo": "Vacía la cabeza antes de acostarte",
-        "texto": "Anota en una hoja de papel todo lo que tienes en la cabeza: tareas de mañana, preocupaciones, pendientes. Eso libera al cerebro del modo de alerta y permite que el sistema nervioso entre en modo de descanso.",
-        "dica": "No tiene que ser un diario ni nada elaborado. Una lista de 5 líneas ya reduce la ansiedad nocturna."
-      }
-    ],
-    "evitar": [
-      "Comer dulces o carbohidratos pesados después de las 20:00",
-      "Quedarte en el celular acostada hasta dormirte",
-      "Tomar café o té con cafeína después de las 17:00",
-      "Dormir con la TV encendida o con la luz prendida"
-    ],
-    "lembre": "Cada noche bien dormida es un día de adelgazar en piloto automático."
+    "descricao": "Lo que haces en las 2 horas antes de dormir impacta directamente en la insulina del día siguiente."
   },
   {
     "id": "protocolo-03-festa",
     "imagem": "/materiais/protocolo-03-festa.jpg",
     "tag": "🎉 Fiesta · antes, durante y después",
     "titulo": "Protocolo de la Fiesta",
-    "descricao": "No necesitas rechazar la invitación, comer antes de ir ni sentirte culpable al día siguiente.",
-    "acontece": "Vas a la fiesta decidida a portarte bien. Entonces ves la mesa, comes de todo, bebes más de lo que planeaste y despiertas al día siguiente con culpa e hinchazón. El problema no fue la fiesta. Fue la falta de un plan.",
-    "solucao": "Con 4 acciones simples disfrutas la fiesta, comes lo que te gusta y no te sales del camino.",
-    "frase": "Una fiesta no destruye tus resultados. Lo que marca la diferencia es saber disfrutar sin convertir una comida en un fin de semana entero fuera de control.",
-    "passos": [
-      {
-        "icone": "🥗",
-        "numero": "01",
-        "titulo": "Come antes de salir de casa",
-        "texto": "No llegues a la fiesta con hambre. Un refrigerio ligero con proteína (huevo, yogur, queso) antes de salir reduce la insulina y controla el apetito. Quien llega con hambre come rápido, no mastica y pierde el control de la cantidad.",
-        "dica": "Un yogur natural con una fruta 1 hora antes ya lo resuelve. Simple y eficaz."
-      },
-      {
-        "icone": "🥩",
-        "numero": "02",
-        "titulo": "En la mesa: primero la proteína",
-        "texto": "Cuando vayas a servirte, empieza por las proteínas y las ensaladas. Desaceleran la digestión de los carbohidratos que vendrán después. Eso reduce el pico de insulina incluso si comes dulce enseguida.",
-        "dica": "Un plato de proteína antes de los bocadillos ya marca la diferencia. No necesitas evitar nada, solo cambiar el orden."
-      },
-      {
-        "icone": "🥂",
-        "numero": "03",
-        "titulo": "Si bebes, elige mejor",
-        "texto": "El alcohol eleva la insulina y bloquea la quema de grasa hasta por 24 horas. Si vas a beber, prefiere vino seco o un destilado con agua mineral con gas. Evita la cerveza, los cócteles azucarados y los tragos con azúcar.",
-        "dica": "Alterna cada trago con un vaso de agua. Además de hidratarte, bebes menos en total."
-      },
-      {
-        "icone": "🌅",
-        "numero": "04",
-        "titulo": "Al día siguiente: retoma sin drama",
-        "texto": "No hagas ayuno de castigo, no te saltes comidas, no te peses esa mañana. Toma agua, come proteína en el desayuno y vuelve a la rutina normal. Un día fuera no deshace semanas de constancia.",
-        "dica": "Lo que engorda no es la fiesta. Es el ciclo de culpa, restricción y compensación que viene después."
-      }
-    ],
-    "evitar": [
-      "Llegar a la fiesta con hambre",
-      "Empezar por la mesa de dulces y bocadillos",
-      "Tomar gaseosas o cócteles azucarados",
-      "Hacer ayuno de castigo al día siguiente"
-    ],
-    "lembre": "Una fiesta no tiene que ser sabotaje. Puede ser solo una fiesta."
+    "descricao": "No necesitas rechazar la invitación, comer antes de ir ni sentirte culpable al día siguiente."
   },
   {
     "id": "protocolo-04-viagem",
     "imagem": "/materiais/protocolo-04-viagem.jpg",
     "tag": "✈️ Viaje · antes y durante",
     "titulo": "Protocolo del Viaje",
-    "descricao": "Viajar no tiene que ser sinónimo de abandono total. Con pequeñas elecciones mantienes el ritmo sin renunciar al paseo.",
-    "acontece": "En el viaje, la rutina desaparece. Comes a deshoras, caminas más, duermes distinto, tomas menos agua. Cuando vuelves, sientes que perdiste todo lo que habías logrado.",
-    "solucao": "No necesitas seguir el protocolo perfecto de viaje. Necesitas seguir lo mínimo que impide el retroceso.",
-    "frase": "Viajar no significa abandonar tu rutina. El secreto es adaptarte, no rendirte.",
-    "passos": [
-      {
-        "icone": "🎒",
-        "numero": "01",
-        "titulo": "Lleva refrigerios en el bolso",
-        "texto": "Almendras, nueces, barra de proteína, fruta deshidratada sin azúcar. Tener un refrigerio saludable en el bolso evita que el hambre te obligue a comer lo que aparezca en el aeropuerto, la gasolinera o el puesto de la carretera.",
-        "dica": "Un paquetito de frutos secos y una fruta ya salvan la comida en situaciones de emergencia."
-      },
-      {
-        "icone": "💧",
-        "numero": "02",
-        "titulo": "El agua es prioridad",
-        "texto": "De viaje nos olvidamos de tomar agua. El avión deshidrata, el auto distrae, el paseo desgasta. Una deshidratación leve ya causa hambre falsa, cansancio y retención de líquidos. Lleva siempre una botellita.",
-        "dica": "En el avión, pide agua cada vez que pase la azafata. No esperes a sentir sed."
-      },
-      {
-        "icone": "🍽️",
-        "numero": "03",
-        "titulo": "En el restaurante: elecciones simples",
-        "texto": "No necesitas pedir el plato más saludable del menú. Solo aplica la regla: primero la proteína. Pide la proteína principal, cómela primero y después el acompañamiento. Eso ya controla la insulina en la comida.",
-        "dica": "A la plancha, al horno o cocido en lugar de frito. No es un sacrificio, es solo elegir entre opciones parecidas."
-      },
-      {
-        "icone": "🚶",
-        "numero": "04",
-        "titulo": "Aprovecha el movimiento natural",
-        "texto": "De viaje generalmente caminas más que en casa. Subir escaleras en lugar del ascensor, caminar al restaurante, explorar el destino a pie. Eso ya cuenta como ejercicio y activa la quema de grasa sin necesidad de gimnasio.",
-        "dica": "No fuerces un entrenamiento en el viaje si no se puede. Pero aprovecha cada excusa para caminar más."
-      }
-    ],
-    "evitar": [
-      "Pasar horas sin comer esperando el restaurante perfecto",
-      "Excederte con el alcohol solo porque estás de vacaciones",
-      "Dejar por completo la hidratación",
-      "Pesarte al volver y entrar en modo castigo"
-    ],
-    "lembre": "El viaje es para disfrutar. Solo que no hace falta disfrutarlo todo de una vez."
+    "descricao": "Viajar no tiene que ser sinónimo de abandono total. Con pequeñas elecciones mantienes el ritmo sin renunciar al paseo."
   },
   {
     "id": "protocolo-05-visita",
     "imagem": "/materiais/protocolo-05-visita.jpg",
     "tag": "🏠 Visita · cuando recibes o te reciben",
     "titulo": "Protocolo de la Visita",
-    "descricao": "Recibir visitas no tiene que convertirse en sabotaje. Puedes ser una buena anfitriona y seguir con tu proceso.",
-    "acontece": "Llegó la visita, llegó el pastel, llegaron los bocadillos, llegó la gaseosa. Comes por educación, por ansiedad o porque no sabes qué hacer. Y después la culpa llega junto con los invitados.",
-    "solucao": "Ser una buena anfitriona no significa comer de todo. Significa crear un ambiente agradable donde tú también te sientas bien.",
-    "frase": "No tienes que elegir entre ser amable y cuidarte. Se pueden hacer las dos cosas.",
-    "passos": [
-      {
-        "icone": "🫖",
-        "numero": "01",
-        "titulo": "Ofrece lo que tú también puedes tomar",
-        "texto": "Sirve té frío de flor de Jamaica (hibisco), agua saborizada con limón y menta, jugo natural diluido. Son opciones bonitas, sabrosas y que puedes tomar sin culpa. Nadie se va a quejar.",
-        "dica": "Una jarra de agua con limón y hielo sobre la mesa ya resuelve la bebida de todos."
-      },
-      {
-        "icone": "🧀",
-        "numero": "02",
-        "titulo": "Ten una opción proteica en la mesa",
-        "texto": "Frutos secos, queso, huevos de codorniz, bastones de verduras con hummus. Ponlos junto con lo que trajeron los demás. Tendrás qué comer sin necesidad de atacar el pastel entero.",
-        "dica": "No necesitas esconder que estás comiendo distinto. Solo ponlo en la mesa y que coma quien quiera."
-      },
-      {
-        "icone": "🍰",
-        "numero": "03",
-        "titulo": "Si quieres comer, come con conciencia",
-        "texto": "Una rebanada de pastel no arruina el proceso. Comerte todo el pastel porque estaba enfrente, sí. Si vas a comer, elige lo que más te gusta, siéntate, mastica despacio y disfruta. Sin culpa y sin repetir.",
-        "dica": "Comer con placer y atención genera mucha más satisfacción que comer rápido y repetir."
-      },
-      {
-        "icone": "💬",
-        "numero": "04",
-        "titulo": "No necesitas explicar tus elecciones",
-        "texto": "Si no quieres comer algo, una sonrisa y un «estoy bien, gracias» lo resuelve. No le debes explicaciones a nadie sobre lo que pones en tu plato. Nadie se va a ir con hambre por una negativa amable.",
-        "dica": "Cuanta menos explicación, menos presión. Una respuesta simple cierra el tema."
-      }
-    ],
-    "evitar": [
-      "Comer por obligación o para no incomodar",
-      "Quedarte de pie en la cocina picando mientras ordenas",
-      "Tomar gaseosa porque no había otra opción",
-      "Entrar en modo castigo después de que la visita se fue"
-    ],
-    "lembre": "Tu casa, tus reglas. Con ligereza y sin drama."
+    "descricao": "Recibir visitas no tiene que convertirse en sabotaje. Puedes ser una buena anfitriona y seguir con tu proceso."
   },
   {
     "id": "protocolo-06-preguica-cansaco",
     "imagem": "/materiais/protocolo-06-preguica-cansaco.jpg",
     "tag": "😴 Pereza y Cansancio · días difíciles",
     "titulo": "Protocolo de la Pereza",
-    "descricao": "Para los días en que no tienes energía ni ganas. El secreto es no dejar que el cansancio se convierta en abandono.",
-    "acontece": "Estás cansada, sin ánimo y con ganas de comerte todo lo que ves. El sofá, el chocolate y el delivery parecen la única salida. Y cuando pasa, aparece la culpa.",
-    "solucao": "Existe un modo mínimo de funcionamiento para los días difíciles. No te hará adelgazar más rápido. Pero impedirá que vuelvas al punto de partida.",
-    "frase": "No todos los días vas a estar motivada. Y está bien. El objetivo es continuar incluso los días en que las ganas no aparecen.",
-    "passos": [
-      {
-        "icone": "💧",
-        "numero": "01",
-        "titulo": "Empieza solo con agua",
-        "texto": "Antes de decidir cualquier cosa, toma 1 vaso grande de agua. El cansancio y el desánimo muchas veces son deshidratación disfrazada. Espera 10 minutos. Con frecuencia, el ánimo mejora solo.",
-        "dica": "Agrega limón u hojas de menta. El agua con sabor hidrata más porque tomas más."
-      },
-      {
-        "icone": "🍳",
-        "numero": "02",
-        "titulo": "La comida mínima aceptable",
-        "texto": "No necesitas cocinar. Pero sí necesitas comer algo de verdad. Huevo revuelto con queso, yogur natural, fruta con mantequilla de maní. Cualquier cosa con proteína que no sea ultraprocesada. El objetivo es no dejar que el vacío guíe tus elecciones.",
-        "dica": "Huevo revuelto listo en 3 minutos. Es el alimento de emergencia oficial de cualquier día difícil."
-      },
-      {
-        "icone": "🚶",
-        "numero": "03",
-        "titulo": "5 minutos de movimiento, solo eso",
-        "texto": "No necesitas entrenar. Solo levántate del sofá y camina por la casa durante 5 minutos. O haz 20 sentadillas. El movimiento rompe el ciclo de letargo, libera un poco de dopamina y cambia ligeramente el estado mental.",
-        "dica": "Pon una canción que te guste y camina. Muchas veces los 5 minutos se convierten en 15 naturalmente."
-      },
-      {
-        "icone": "🛏️",
-        "numero": "04",
-        "titulo": "Si necesitas descansar, descansa de verdad",
-        "texto": "Hay días en que lo mejor que puedes hacer por tu cuerpo es descansar. Dormir una hora, acostarte sin pantallas, relajarte de verdad. Eso no es pereza, es recuperación. El problema es cuando el descanso se convierte en descontrol con la comida.",
-        "dica": "Descansar sin comida chatarra es productivo. Sofá con frituras y series es otra historia."
-      }
-    ],
-    "evitar": [
-      "Usar el cansancio como justificación para comer ultraprocesados",
-      "Pasar todo el día sin comer y atacar la comida por la noche",
-      "Culparte por no haber entrenado",
-      "Pedir delivery sin mirar las opciones más proteicas del menú"
-    ],
-    "lembre": "Un mal día no deshace tu proceso. Rendirte, sí."
+    "descricao": "Para los días en que no tienes energía ni ganas. El secreto es no dejar que el cansancio se convierta en abandono."
   },
   {
     "id": "protocolo-07-marmita",
     "imagem": "/materiais/protocolo-07-marmita.jpg",
     "tag": "🥡 Lonchera · armarla sin errores y sin sufrir",
     "titulo": "Protocolo de la Lonchera",
-    "descricao": "La lonchera correcta es la mejor estrategia contra la improvisación. Decides en casa, donde tienes el control. No en la fila del restaurante.",
-    "acontece": "Llegas al trabajo sin lonchera y el restaurante solo tiene frituras y platos cargados. Entonces cedes. No por debilidad, sino por falta de alternativa.",
-    "solucao": "Una lonchera bien armada resuelve el almuerzo, evita la fila y además ahorra dinero. Y no necesita ser elaborada.",
-    "frase": "Cuando tienes la comida lista, tomas mejores decisiones sin depender solo de la fuerza de voluntad.",
-    "passos": [
-      {
-        "icone": "🏗️",
-        "numero": "01",
-        "titulo": "La estructura de toda lonchera correcta",
-        "texto": "Toda lonchera eficiente tiene 4 partes: proteína (pollo, huevo, atún, carne), verdura salteada o al horno, hoja verde cruda o cocida, y una porción pequeña de carbohidrato complejo (arroz integral, camote, yuca). En ese orden de prioridad.",
-        "dica": "La proteína y la verdura son obligatorias. El carbohidrato es opcional. La hoja verde es un extra."
-      },
-      {
-        "icone": "📦",
-        "numero": "02",
-        "titulo": "Prepara por tandas el lunes",
-        "texto": "Cocina el pollo, hornea el camote y saltea las verduras de una sola vez. Divídelo en recipientes y guárdalo en el refrigerador. Los demás días es solo armar en 2 minutos. Sin cocinar todos los días, sin la excusa de la falta de tiempo.",
-        "dica": "El pollo al horno dura 4 días en el refrigerador. El camote cocido, 3 días. Haz todo de una vez."
-      },
-      {
-        "icone": "🚫",
-        "numero": "03",
-        "titulo": "Lo que no va en la lonchera",
-        "texto": "Evita mezclar muchos carbohidratos (arroz + pasta + pan). Evita las salsas listas, la mayonesa industrial y los sazonadores de sobre con mucho sodio. Esos productos inflaman, retienen líquidos y elevan la insulina incluso en porciones pequeñas.",
-        "dica": "Sazona con aceite de oliva, limón, ajo, cebolla, hierbas frescas. Queda más rico y sin los extras indeseados."
-      },
-      {
-        "icone": "⏰",
-        "numero": "04",
-        "titulo": "La hora de comer importa tanto como lo que comes",
-        "texto": "Intenta comer a la misma hora todos los días. El cuerpo también regula la insulina por el ritmo circadiano. Comer siempre a las mismas horas entrena el metabolismo y reduce los picos de hambre a deshoras.",
-        "dica": "Programa una alarma discreta en el celular para la hora del almuerzo. Parece una tontería, pero funciona."
-      }
-    ],
-    "evitar": [
-      "Armar la lonchera solo con carbohidratos por practicidad",
-      "Usar salsa lista o sazonador de sobre industrializado",
-      "Saltarte la lonchera y comer cualquier cosa porque tenías prisa",
-      "Mezclar más de 2 fuentes de carbohidrato en el mismo recipiente"
-    ],
-    "lembre": "Una lonchera regular sigue siendo mejor que un bufé sin criterio."
+    "descricao": "La lonchera correcta es la mejor estrategia contra la improvisación. Decides en casa, donde tienes el control. No en la fila del restaurante."
   },
   {
     "id": "protocolo-08-fim-de-semana",
     "imagem": "/materiais/protocolo-08-fim-de-semana.jpg",
     "tag": "🌅 Fin de Semana · sin perder el hilo",
     "titulo": "Protocolo del Fin de Semana",
-    "descricao": "El fin de semana es donde la mayoría pierde lo que logró durante la semana. No por accidente. Por falta de plan.",
-    "acontece": "De lunes a viernes te va bien. El sábado comes lo que no comiste en toda la semana. El domingo compensas más. El lunes empiezas todo de cero. Y el progreso nunca aparece.",
-    "solucao": "Flexibilidad con estructura. Puedes relajarte, comer distinto y disfrutar. Pero manteniendo 3 anclas que impiden el retroceso.",
-    "frase": "No engordas entre lunes y viernes. Generalmente los excesos se acumulan el fin de semana. Por eso, pequeños cuidados aquí marcan mucha diferencia.",
-    "passos": [
-      {
-        "icone": "☀️",
-        "numero": "01",
-        "titulo": "Mantén el desayuno",
-        "texto": "Incluso el fin de semana, incluso durmiendo más, haz un desayuno con proteína. Esa ancla regula la insulina de todo el día y evita que el hambre acumulada te lleve a excesos en el almuerzo o la cena.",
-        "dica": "Huevo revuelto, yogur o queso. No necesita ser elaborado. Necesita tener proteína."
-      },
-      {
-        "icone": "🚶",
-        "numero": "02",
-        "titulo": "Una caminata o actividad placentera",
-        "texto": "No tiene que ser entrenamiento. Una caminata en el parque, nadar, bailar, jugar con los niños. Cualquier movimiento que te guste y que dure al menos 20 minutos ya activa el metabolismo y mejora el ánimo del día.",
-        "dica": "Invita a alguien. La actividad en compañía tiene muchas más posibilidades de ocurrir."
-      },
-      {
-        "icone": "🍽️",
-        "numero": "03",
-        "titulo": "Elige 1 comida libre de verdad",
-        "texto": "En lugar de comer mal todo el día, elige 1 comida para comer lo que quieras con placer. Eso satisface el antojo, evita la culpa y mantiene el resto del día equilibrado. Una comida libre no deshace el proceso.",
-        "dica": "Elige con anticipación cuál será la comida libre. Así anticipas el placer y no cedes a todos los impulsos del día."
-      },
-      {
-        "icone": "💤",
-        "numero": "04",
-        "titulo": "Duerme bien y despierta sin castigo",
-        "texto": "Aprovecha el fin de semana para dormir mejor. Y si comiste más de lo que planeaste el sábado, despierta el domingo sin castigarte. Retoma el desayuno con proteína y sigue adelante. Sin compensaciones extremas.",
-        "dica": "Lo que pasa el fin de semana se queda en el fin de semana. El lunes siempre es un nuevo comienzo limpio."
-      }
-    ],
-    "evitar": [
-      "Saltarte el desayuno porque te despertaste más tarde",
-      "Comer mal todo el día porque «es fin de semana»",
-      "Compensar el domingo lo que comiste el sábado",
-      "Pasar todo el fin de semana en el sofá sin ningún movimiento"
-    ],
-    "lembre": "Dos días no deshacen cinco. A menos que tú lo permitas."
+    "descricao": "El fin de semana es donde la mayoría pierde lo que logró durante la semana. No por accidente. Por falta de plan."
   },
   {
     "id": "protocolo-09-tpm-ciclo",
     "imagem": "/materiais/protocolo-09-tpm-ciclo.jpg",
     "tag": "🌸 SPM y Ciclo · los días más difíciles del mes",
     "titulo": "Protocolo del SPM y del Ciclo",
-    "descricao": "El síndrome premenstrual (SPM) no es una excusa, pero es real. Tu cuerpo cambia, tus necesidades cambian. Saberlo lo cambia todo.",
-    "acontece": "En la semana del SPM el antojo de dulce se dispara, aparece la hinchazón, el ánimo cae y la motivación desaparece. Comes lo que no planeaste, sientes culpa y crees que fracasaste.",
-    "solucao": "El SPM tiene causas hormonales reales. Combatirlo con los alimentos y las acciones correctas reduce los síntomas y protege el proceso de pérdida de peso.",
-    "frase": "Hay fases del ciclo en las que el hambre aumenta, aparece la hinchazón y el antojo de dulce se vuelve más intenso. Eso no es falta de fuerza de voluntad. Es parte del proceso.",
-    "passos": [
-      {
-        "icone": "🍫",
-        "numero": "01",
-        "titulo": "El antojo de dulce tiene una causa",
-        "texto": "La caída de progesterona antes de la menstruación reduce la serotonina, lo que genera un antojo intenso de carbohidratos y dulces. En lugar de resistir y luego ceder de forma exagerada, satisfácelo con calidad: chocolate 70% cacao, dátil, fruta con mantequilla de maní.",
-        "dica": "2 cuadritos de chocolate amargo con una nuez resuelven el antojo de dulce sin disparar la insulina."
-      },
-      {
-        "icone": "🧂",
-        "numero": "02",
-        "titulo": "Reduce el sodio para desinflamar",
-        "texto": "La hinchazón del SPM es causada por una retención de líquidos mediada por hormonas. Reducir la sal, los embutidos y los ultraprocesados en los días previos a la menstruación ya reduce visiblemente la hinchazón. Aumenta el agua.",
-        "dica": "El té de diente de león o de flor de Jamaica (hibisco) tiene un efecto diurético natural y ayuda a eliminar el líquido retenido."
-      },
-      {
-        "icone": "🥦",
-        "numero": "03",
-        "titulo": "El magnesio es tu aliado",
-        "texto": "El magnesio reduce los cólicos, mejora el ánimo y disminuye el antojo de dulce del SPM. Fuentes accesibles: plátano (banana), avena, frijoles, nuez de Brasil (solo 1 por día), semillas de calabaza. Prefiere la comida al suplemento.",
-        "dica": "Una cucharada de semillas de calabaza en el yogur o en la ensalada ya aporta una buena dosis de magnesio."
-      },
-      {
-        "icone": "🛁",
-        "numero": "04",
-        "titulo": "Ejercicio ligero, no castigo",
-        "texto": "Durante el SPM y la menstruación, los entrenamientos intensos pueden empeorar los síntomas. Prefiere caminata, yoga, estiramiento, ejercicios en el agua. El movimiento ligero alivia el cólico, mejora el ánimo y no sobrecarga el cuerpo.",
-        "dica": "Si no quieres hacer ejercicio, no te castigues. Una caminata de 15 minutos al aire libre ya marca la diferencia en el ánimo."
-      }
-    ],
-    "evitar": [
-      "Comer mucho dulce creyendo que así se te pasará el antojo",
-      "Restringir el agua por miedo a hincharte más",
-      "Hacer entrenamiento intenso durante un cólico fuerte",
-      "Pesarte durante el SPM e interpretar el peso como un fracaso"
-    ],
-    "lembre": "El peso en la báscula en la semana del SPM no es grasa. Es líquido. Y pasa."
+    "descricao": "El síndrome premenstrual (SPM) no es una excusa, pero es real. Tu cuerpo cambia, tus necesidades cambian. Saberlo lo cambia todo."
   },
   {
     "id": "protocolo-10-estresse-ansiedade",
     "imagem": "/materiais/protocolo-10-estresse-ansiedade.jpg",
     "tag": "😤 Estrés y Ansiedad · cuando la cabeza le estorba al cuerpo",
     "titulo": "Protocolo del Estrés",
-    "descricao": "El estrés crónico es uno de los mayores bloqueadores de la pérdida de peso. No por lo que comes. Por lo que les hace a tus hormonas.",
-    "acontece": "Estás estresada, comes sin hambre, comes rápido, comes lo que aparece. Después sientes que no tienes autocontrol. Pero no es debilidad. Es el cortisol controlando tus elecciones.",
-    "solucao": "No vas a eliminar el estrés de tu vida. Pero sí puedes impedir que mande sobre lo que comes.",
-    "frase": "Muchas veces el hambre no viene del estómago. Viene del cansancio, de la preocupación y de las ganas de sentirte mejor.",
-    "passos": [
-      {
-        "icone": "🫁",
-        "numero": "01",
-        "titulo": "Respira antes de comer",
-        "texto": "Cuando estés ansiosa y con ganas de atacar el refrigerador, detente y respira profundo 5 veces antes. Inhala por la nariz en 4 tiempos, exhala por la boca en 6 tiempos. Eso activa el sistema nervioso parasimpático y reduce el cortisol en segundos.",
-        "dica": "El simple hecho de detenerte 1 minuto antes de comer cambia por completo la calidad de la elección que viene después."
-      },
-      {
-        "icone": "🚶",
-        "numero": "02",
-        "titulo": "El movimiento como válvula de escape",
-        "texto": "Cuando llegue el estrés, cambia el refrigerador por una caminata de 10 minutos. El ejercicio consume el cortisol que estaba circulando y libera endorfinas en su lugar. Vuelves tranquila y con las ideas más claras.",
-        "dica": "Sal de casa aunque sea solo a la acera. Cambiar de ambiente cambia el estado mental."
-      },
-      {
-        "icone": "🍵",
-        "numero": "03",
-        "titulo": "Reemplaza el picoteo ansioso",
-        "texto": "Si en el estrés la mano se va sola hacia la comida, ten una alternativa lista: té tibio, agua con limón, una nuez. Ocupar la mano y la boca con algo neutro rompe el ciclo automático sin generar culpa.",
-        "dica": "Los tés de manzanilla, toronjil o maracuyá tienen una acción ansiolítica comprobada. Tenlos en casa."
-      },
-      {
-        "icone": "📋",
-        "numero": "04",
-        "titulo": "Identifica el detonante, no la comida",
-        "texto": "Cada vez que comas por estrés, anota: ¿qué pasó antes? ¿Qué sentimiento apareció? ¿La comida fue la respuesta a qué situación? Entender el detonante es más poderoso que cualquier dieta.",
-        "dica": "No necesitas un terapeuta para hacerlo. Una libretita en el bolsillo ya lo resuelve."
-      }
-    ],
-    "evitar": [
-      "Usar la comida como recompensa por un día difícil",
-      "Comer frente a la computadora o durante las reuniones",
-      "Comprar snacks ultraprocesados como «reserva de emergencia»",
-      "Ignorar el estrés esperando que pase solo"
-    ],
-    "lembre": "No te falta autocontrol. Tienes el cortisol alto. Son cosas distintas."
+    "descricao": "El estrés crónico es uno de los mayores bloqueadores de la pérdida de peso. No por lo que comes. Por lo que les hace a tus hormonas."
   }
 ]
 

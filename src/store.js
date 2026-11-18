@@ -21,6 +21,7 @@ const ES = {
   'Não foi possível alterar o acesso.': 'No se pudo cambiar el acceso.',
   'Este link expirou ou já foi usado. Peça um novo.': 'Este enlace expiró o ya fue usado. Pide uno nuevo.',
   'Não foi possível carregar a conversa.': 'No se pudo cargar la conversación.',
+  'Não foi possível carregar este protocolo. Tente de novo.': 'No se pudo cargar este protocolo. Inténtalo de nuevo.',
   'Você chegou ao limite de mensagens de hoje. Volte amanhã.': 'Llegaste al límite de mensajes de hoy. Vuelve mañana.',
   'O assistente é exclusivo do acesso Premium.': 'Habla con la Dra. es exclusivo del acceso Premium.',
   'O assistente não conseguiu responder agora. Tente de novo em instantes.': 'La Dra. no pudo responder ahora. Inténtalo de nuevo en unos instantes.',
@@ -149,6 +150,17 @@ export async function criarConta(nome, telefone, senha) {
   if (error) throw new Error(msg(error.message.includes('registered') ? 'Este telefone ou e-mail já tem conta. Use "Entrar".' : 'Não encontramos uma compra com este telefone ou e-mail. Use o mesmo e-mail da compra.'))
   if (!data.session) throw new Error(msg('Conta criada, mas a confirmação por e-mail está ligada no Supabase. Desligue-a (veja o README).'))
   return comAdmin(usuarioDe(data.user)) // o perfil é criado pelo próprio banco
+}
+
+// ---- conteúdo Premium: o banco só entrega o protocolo completo para quem é Premium (ou admin) ----
+const cacheProtocolos = {}
+export async function protocoloCompleto(id) {
+  if (cacheProtocolos[id]) return cacheProtocolos[id]
+  if (DEMO) return { acontece: '', solucao: 'Modo demostración: el contenido completo viene del banco de datos.', frase: '', passos: [], evitar: [], lembre: '' }
+  const { data, error } = await sb.from('protocolos_conteudo').select('dados').eq('id', id).maybeSingle()
+  if (error || !data) throw new Error(msg('Não foi possível carregar este protocolo. Tente de novo.'))
+  cacheProtocolos[id] = data.dados
+  return data.dados
 }
 
 // ---- assistente (IA): o histórico fica no banco; a resposta vem da função "asistente" do Supabase (Gemini) ----

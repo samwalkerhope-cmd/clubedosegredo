@@ -6,3 +6,5 @@ dist-preview
 .vercel
 # PDFs dos presentes ficam no Supabase Storage, não no site
 public/presentes/*.pdf
+# Conteúdo exclusivo do Premium (carregado no banco; não vai para o GitHub)
+privado/

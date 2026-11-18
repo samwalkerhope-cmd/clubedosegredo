@@ -919,8 +919,33 @@ function Protocolos() {
 function Protocolo() {
   const { id } = useParams()
   const navegar = useNavigate()
-  const p = PROTOCOLOS.find((x) => x.id === id)
-  if (!p) return <Navigate to="/protocolos" replace />
+  const vitrine = PROTOCOLOS.find((x) => x.id === id)
+  const [conteudo, setConteudo] = useState(null)
+  const [erro, setErro] = useState('')
+  const [tentativa, setTentativa] = useState(0)
+  useEffect(() => {
+    if (!vitrine) return
+    setErro('')
+    store.protocoloCompleto(id).then(setConteudo).catch((e) => setErro(e.message))
+  }, [id, tentativa])
+  if (!vitrine) return <Navigate to="/protocolos" replace />
+  if (!conteudo) {
+    return (
+      <div className="space-y-5">
+        <button className="flex items-center gap-1 text-sm font-medium text-azul-700" onClick={() => navegar(-1)}><ChevronLeft size={18} /> Voltar</button>
+        <h1 className="titulo">{vitrine.titulo}</h1>
+        {erro ? (
+          <div className="space-y-3">
+            <Erro>{erro}</Erro>
+            <button className="btn-azul w-full" onClick={() => setTentativa((n) => n + 1)}>Tentar de novo</button>
+          </div>
+        ) : (
+          <p className="py-8 text-center text-sm text-azul-700">Carregando…</p>
+        )}
+      </div>
+    )
+  }
+  const p = { ...vitrine, ...conteudo }
   return (
     <div className="space-y-5">
       <button className="flex items-center gap-1 text-sm font-medium text-azul-700" onClick={() => navegar(-1)}><ChevronLeft size={18} /> Voltar</button>

@@ -488,6 +488,33 @@ drop policy if exists "chat proprio insercao" on public.chat_mensagens;
 create policy "chat proprio leitura" on public.chat_mensagens for select using (auth.uid() = user_id);
 create policy "chat proprio insercao" on public.chat_mensagens for insert with check (auth.uid() = user_id);
 
+-- ---------------------------------------------------------------- conteúdo exclusivo do Premium (Protocolos para imprevistos)
+-- O site guarda só a vitrine (título, foto, etiqueta, descrição). O conteúdo completo fica aqui e só sai para Premium/admin.
+create table if not exists public.protocolos_conteudo (
+  id text primary key,
+  ordem int not null default 0,
+  dados jsonb not null,
+  atualizado_em timestamptz not null default now()
+);
+alter table public.protocolos_conteudo enable row level security;
+revoke all on public.protocolos_conteudo from anon;
+revoke insert, update, delete on public.protocolos_conteudo from authenticated;
+grant select on public.protocolos_conteudo to authenticated;
+
+create or replace function public.tem_premium() returns boolean
+language sql stable security definer set search_path = public as $$
+  select public.eh_admin() or (
+    public.tem_acesso() and exists (select 1 from public.profiles where id = auth.uid() and plano = 'clube')
+  )
+$$;
+revoke execute on function public.tem_premium() from public, anon;
+grant execute on function public.tem_premium() to authenticated;
+
+drop policy if exists "protocolos premium" on public.protocolos_conteudo;
+create policy "protocolos premium" on public.protocolos_conteudo for select using (public.tem_premium());
+-- O texto dos protocolos NÃO fica neste arquivo (o repositório é público). Ele foi carregado direto no banco
+-- e há uma cópia em privado/protocolos-*.sql (pasta ignorada pelo git).
+
 -- ---------------------------------------------------------------- primeira administradora
 -- 1) Libere o seu próprio telefone (troque pelo seu número, só dígitos, com DDD):
 --      insert into public.acessos (telefone, nome) values ('85999999999', 'Seu nome');
