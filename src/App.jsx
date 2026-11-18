@@ -75,10 +75,6 @@ function Entrada({ aoEntrar }) {
               </>
             )}
             <button type="button" className="block w-full text-center text-sm font-semibold text-ouro-700 underline" onClick={() => { setEsqueci(false); setErro('') }}>Voltar para entrar</button>
-            {APP.whatsapp && (
-              <a className="block text-center text-xs text-azul-700 underline" target="_blank" rel="noreferrer"
-                href={`https://wa.me/${APP.whatsapp}?text=${encodeURIComponent('Olá! Esqueci minha senha do Clube. Meu telefone ou e-mail: ' + (telefone || ''))}`}>Sem acesso ao seu e-mail? Fale com a gente no WhatsApp</a>
-            )}
           </form>
         ) : (
         <form onSubmit={enviar} className="card mt-8 space-y-4 p-6">
