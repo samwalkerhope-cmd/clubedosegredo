@@ -411,6 +411,63 @@ grant execute on function public.login_de(text) to anon, authenticated;
 grant execute on function public.normalizar_tel(text) to anon, authenticated;
 grant execute on function public.webhook_compra(text, text, text, text, boolean, text, jsonb, text) to anon, authenticated;
 
+-- ---------------------------------------------------------------- recuperação de senha por e-mail (link de uso único)
+-- O app chama um webhook do n8n; o n8n chama pedir_reset (com o token secreto) e envia o link pelo Mautic.
+-- O link abre /#/restablecer?t=...; o app chama redefinir_com_token com a senha nova.
+create table if not exists public.resets_senha (
+  token_hash text primary key,
+  user_id uuid not null references auth.users on delete cascade,
+  criado_em timestamptz not null default now(),
+  expira_em timestamptz not null default now() + interval '1 hour',
+  usado_em timestamptz
+);
+alter table public.resets_senha enable row level security;
+revoke all on public.resets_senha from anon, authenticated;
+
+create or replace function public.pedir_reset(p_ident text, p_token text default null) returns json
+language plpgsql security definer set search_path = public, extensions as $$
+declare
+  tok text := coalesce(p_token, nullif(current_setting('request.headers', true), '')::json->>'x-webhook-token');
+  r public.acessos; uid uuid; novo text;
+begin
+  if tok is null or tok is distinct from (select valor from public.config_privada where chave = 'webhook_token') then
+    raise exception 'token inválido' using errcode = '28000';
+  end if;
+  r := public.achar_acesso(p_ident);
+  if r.id is null or not r.ativo or r.email is null then
+    return json_build_object('enviar', false, 'motivo', case when r.id is null then 'nao_encontrado' when not r.ativo then 'inativo' else 'sem_email' end);
+  end if;
+  select u.id into uid from auth.users u where split_part(u.email, '@', 1) = r.login limit 1;
+  if uid is null then  -- tem acesso mas ainda não criou a conta: manda o e-mail de acesso
+    return json_build_object('enviar', true, 'tipo', 'acesso', 'email', r.email, 'nome', r.nome);
+  end if;
+  if (select count(*) from public.resets_senha where user_id = uid and criado_em > now() - interval '1 hour') >= 3 then
+    return json_build_object('enviar', false, 'motivo', 'limite');
+  end if;
+  novo := encode(extensions.gen_random_bytes(24), 'hex');
+  insert into public.resets_senha (token_hash, user_id) values (encode(extensions.digest(novo, 'sha256'), 'hex'), uid);
+  return json_build_object('enviar', true, 'tipo', 'reset', 'email', r.email, 'nome', r.nome, 'token', novo);
+end $$;
+
+create or replace function public.redefinir_com_token(p_token text, p_senha text) returns boolean
+language plpgsql security definer set search_path = public, extensions as $$
+declare h text := encode(extensions.digest(coalesce(p_token, ''), 'sha256'), 'hex'); uid uuid;
+begin
+  if length(coalesce(p_senha, '')) < 6 then raise exception 'senha muito curta'; end if;
+  update public.resets_senha set usado_em = now()
+   where token_hash = h and usado_em is null and expira_em > now()
+   returning user_id into uid;
+  if uid is null then raise exception 'link inválido ou expirado'; end if;
+  update auth.users set encrypted_password = extensions.crypt(p_senha, extensions.gen_salt('bf')), updated_at = now() where id = uid;
+  -- os outros links pendentes dessa pessoa deixam de valer
+  update public.resets_senha set usado_em = now() where user_id = uid and usado_em is null;
+  return true;
+end $$;
+
+revoke execute on function public.pedir_reset(text, text) from public, authenticated;
+grant execute on function public.pedir_reset(text, text) to anon;
+grant execute on function public.redefinir_com_token(text, text) to anon, authenticated;
+
 -- ---------------------------------------------------------------- primeira administradora
 -- 1) Libere o seu próprio telefone (troque pelo seu número, só dígitos, com DDD):
 --      insert into public.acessos (telefone, nome) values ('85999999999', 'Seu nome');

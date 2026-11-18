@@ -10,7 +10,8 @@ export const APP = {
   "frase": "Você não está sozinha. Sem pressão, só direção.",
   "plano": "Clube Premium",
   "whatsapp": "5531996508234",
-  "whatsappRotulo": "Dra. do Segredo no WhatsApp"
+  "whatsappRotulo": "Dra. do Segredo no WhatsApp",
+  "resetUrl": ""
 }
 
 // =====================================================================

@@ -8,7 +8,8 @@ export const APP = {
   "frase": "No estás sola. Sin presión, solo dirección.",
   "plano": "Club Premium",
   "whatsapp": "5531996508234",
-  "whatsappRotulo": "Dra. del Secreto en WhatsApp"
+  "whatsappRotulo": "Dra. del Secreto en WhatsApp",
+  "resetUrl": "https://n8n.neonature.online/webhook/secreto-reset-db343b64bc894d8a"
 }
 
 // =====================================================================
@@ -36,7 +37,7 @@ export const OFERTAS = {
   },
   "clube": {
     "checkoutUrl": "",
-    "vslUrl": "/vsl.html",
+    "vslUrl": "/vsl.es.html",
     "preco": "R$ 67",
     "titulo": "Dra. del Secreto en WhatsApp",
     "subtitulo": "El Secreto de la Insulina te muestra el camino; la Dra. del Secreto recorre ese camino contigo en WhatsApp.",

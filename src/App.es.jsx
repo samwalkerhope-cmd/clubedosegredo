@@ -27,6 +27,15 @@ function Entrada({ aoEntrar }) {
   const [senha, setSenha] = useState('')
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [esqueci, setEsqueci] = useState(false)
+  const [linkEnviado, setLinkEnviado] = useState(false)
+
+  async function pedirLink(e) {
+    e.preventDefault()
+    setErro('')
+    setEnviando(true)
+    try { await store.pedirReset(APP.resetUrl, telefone); setLinkEnviado(true) } catch (err) { setErro(err.message) } finally { setEnviando(false) }
+  }
 
   async function enviar(e) {
     e.preventDefault()
@@ -50,6 +59,28 @@ function Entrada({ aoEntrar }) {
           <p className="mt-1 text-sm text-ouro-300">{APP.frase}</p>
         </div>
 
+        {esqueci ? (
+          <form onSubmit={pedirLink} className="card mt-8 space-y-4 p-6">
+            <div>
+              <h2 className="titulo text-2xl">Recupera tu contraseña</h2>
+              <p className="mt-1 text-sm text-azul-700">Escribe el teléfono o el correo de tu compra. Te enviaremos un enlace para crear una contraseña nueva.</p>
+            </div>
+            {linkEnviado ? (
+              <p className="rounded-xl bg-green-50 px-4 py-3 text-sm text-green-800">Listo. Si encontramos tu cuenta, te enviamos un correo con el enlace (vale por 1 hora). Revisa también la carpeta de spam.</p>
+            ) : (
+              <>
+                <input className="campo" type="text" inputMode="email" placeholder="Teléfono o correo de la compra" value={telefone} onChange={(e) => setTelefone(e.target.value)} autoComplete="username" autoCapitalize="off" spellCheck="false" />
+                <Erro>{erro}</Erro>
+                <button className="btn-azul w-full" disabled={enviando}>{enviando ? 'Espera…' : 'Enviar enlace'}</button>
+              </>
+            )}
+            <button type="button" className="block w-full text-center text-sm font-semibold text-ouro-700 underline" onClick={() => { setEsqueci(false); setErro('') }}>Volver a entrar</button>
+            {APP.whatsapp && (
+              <a className="block text-center text-xs text-azul-700 underline" target="_blank" rel="noreferrer"
+                href={`https://wa.me/${APP.whatsapp}?text=${encodeURIComponent('¡Hola! Olvidé mi contraseña del Club. Mi teléfono o correo: ' + (telefone || ''))}`}>¿No tienes acceso a tu correo? Escríbenos por WhatsApp</a>
+            )}
+          </form>
+        ) : (
         <form onSubmit={enviar} className="card mt-8 space-y-4 p-6">
           <div>
             <h2 className="titulo text-2xl">{criando ? 'Crea tu cuenta' : 'Bienvenida de nuevo'}</h2>
@@ -69,11 +100,65 @@ function Entrada({ aoEntrar }) {
               {criando ? 'Entrar' : 'Crear ahora'}
             </button>
           </p>
-          {!criando && APP.whatsapp && (
+          {!criando && (APP.resetUrl ? (
+            <button type="button" className="block w-full text-center text-sm font-medium text-azul-700 underline" onClick={() => { setEsqueci(true); setErro(''); setLinkEnviado(false) }}>
+              Olvidé mi contraseña
+            </button>
+          ) : APP.whatsapp && (
             <a className="block text-center text-sm font-medium text-azul-700 underline" target="_blank" rel="noreferrer"
               href={`https://wa.me/${APP.whatsapp}?text=${encodeURIComponent('¡Hola! Olvidé mi contraseña del Club. Mi teléfono o correo: ' + (telefone || ''))}`}>
               Olvidé mi contraseña
             </a>
+          ))}
+        </form>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ------------------------------------------------------------------ Nova senha (link do e-mail)
+function tokenDoLink() {
+  const m = (typeof window !== 'undefined' ? window.location.hash : '').match(/^#\/restablecer\?t=([a-f0-9]{20,})/)
+  return m ? m[1] : null
+}
+
+function NovaSenha({ token, aoTerminar }) {
+  const [senha, setSenha] = useState('')
+  const [confirma, setConfirma] = useState('')
+  const [erro, setErro] = useState('')
+  const [feito, setFeito] = useState(false)
+  const [enviando, setEnviando] = useState(false)
+
+  async function salvar(e) {
+    e.preventDefault()
+    setErro('')
+    setEnviando(true)
+    try { await store.redefinirComToken(token, senha, confirma); setFeito(true) } catch (err) { setErro(err.message) } finally { setEnviando(false) }
+  }
+
+  return (
+    <div className="min-h-full bg-gradient-to-b from-azul-900 to-azul-950 px-5 py-10">
+      <div className="mx-auto max-w-md">
+        <div className="flex flex-col items-center text-center">
+          <Marca tamanho="h-20 w-20 text-3xl" />
+          <h1 className="mt-4 font-serif text-3xl font-bold tracking-wide text-white">{APP.nome}</h1>
+        </div>
+        <form onSubmit={salvar} className="card mt-8 space-y-4 p-6">
+          <h2 className="titulo text-2xl">Crea tu nueva contraseña</h2>
+          {feito ? (
+            <>
+              <p className="rounded-xl bg-green-50 px-4 py-3 text-sm text-green-800">¡Contraseña actualizada! Ya puedes entrar con tu correo (o teléfono) y la nueva contraseña.</p>
+              <button type="button" className="btn-azul w-full" onClick={aoTerminar}>Entrar</button>
+            </>
+          ) : (
+            <>
+              <input className="campo" type="password" placeholder="Nueva contraseña (mínimo 6 caracteres)" value={senha} onChange={(e) => setSenha(e.target.value)} autoComplete="new-password" />
+              <input className="campo" type="password" placeholder="Repite la nueva contraseña" value={confirma} onChange={(e) => setConfirma(e.target.value)} autoComplete="new-password" />
+              <Erro>{erro}</Erro>
+              <button className="btn-azul w-full" disabled={enviando}>{enviando ? 'Espera…' : 'Guardar contraseña'}</button>
+              {erro && <button type="button" className="block w-full text-center text-sm font-semibold text-ouro-700 underline" onClick={aoTerminar}>Pedir un enlace nuevo</button>}
+            </>
           )}
         </form>
       </div>
@@ -1499,6 +1584,7 @@ function SoPremium({ plano, children }) {
 // ------------------------------------------------------------------ App
 export default function App() {
   const [usuario, setUsuario] = useState(undefined) // undefined = carregando
+  const [tokenReset, setTokenReset] = useState(tokenDoLink)
   const [feitos, setFeitos] = useState([])
   // O plano real vem do banco (o admin libera no painel). Admins podem simular o outro plano no Perfil (modo de teste).
   const [planoTeste, setPlanoTeste] = useState(() => store.guardado.get('clube.plano.teste', null))
@@ -1525,6 +1611,14 @@ export default function App() {
     setUsuario(null)
   }
 
+  if (tokenReset) {
+    return <NovaSenha token={tokenReset} aoTerminar={async () => {
+      try { window.history.replaceState(null, '', window.location.pathname + '#/') } catch { window.location.hash = '#/' }
+      await store.sair().catch(() => {})
+      setUsuario(null)
+      setTokenReset(null)
+    }} />
+  }
   if (usuario === undefined) return <div className="grid h-full place-items-center bg-azul-900"><Marca /></div>
   if (!usuario) return <Entrada aoEntrar={setUsuario} />
 

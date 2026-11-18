@@ -19,6 +19,7 @@ const ES = {
   'Não encontramos uma compra com este telefone ou e-mail. Use o mesmo e-mail da compra.': 'No encontramos una compra con este teléfono o correo. Usa el mismo correo de la compra.',
   'Não foi possível conectar. Tente de novo.': 'No se pudo conectar. Inténtalo de nuevo.',
   'Não foi possível alterar o acesso.': 'No se pudo cambiar el acceso.',
+  'Este link expirou ou já foi usado. Peça um novo.': 'Este enlace expiró o ya fue usado. Pide uno nuevo.',
   'Telefone ou senha incorretos.': 'Teléfono o contraseña incorrectos.',
   'Informe seu nome.': 'Ingresa tu nombre.',
   'A senha precisa ter pelo menos 6 caracteres.': 'La contraseña debe tener al menos 6 caracteres.',
@@ -143,6 +144,24 @@ export async function criarConta(nome, telefone, senha) {
   if (error) throw new Error(msg(error.message.includes('registered') ? 'Este telefone ou e-mail já tem conta. Use "Entrar".' : 'Não encontramos uma compra com este telefone ou e-mail. Use o mesmo e-mail da compra.'))
   if (!data.session) throw new Error(msg('Conta criada, mas a confirmação por e-mail está ligada no Supabase. Desligue-a (veja o README).'))
   return comAdmin(usuarioDe(data.user)) // o perfil é criado pelo próprio banco
+}
+
+// ---- recuperação de senha (link por e-mail, enviado pelo n8n + Mautic) ----
+// A resposta é sempre a mesma, exista ou não a conta (não revela quem é cliente).
+export async function pedirReset(url, ident) {
+  if (!identValido(ident)) throw new Error(msg('Informe seu telefone (com DDD) ou e-mail.'))
+  if (DEMO || !url) return
+  try {
+    await fetch(url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ ident: String(ident).trim() }).toString() })
+  } catch { /* a mensagem para a cliente é a mesma */ }
+}
+
+export async function redefinirComToken(token, senha, confirma) {
+  if (!senha || senha.length < 6) throw new Error(msg('A senha precisa ter pelo menos 6 caracteres.'))
+  if (senha !== confirma) throw new Error(msg('As senhas não conferem.'))
+  if (DEMO) return
+  const { error } = await sb.rpc('redefinir_com_token', { p_token: token, p_senha: senha })
+  if (error) throw new Error(msg('Este link expirou ou já foi usado. Peça um novo.'))
 }
 
 export async function sair() {
