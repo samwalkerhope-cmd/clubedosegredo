@@ -8,7 +8,7 @@ export const APP = {
   "frase": "No estás sola. Sin presión, solo dirección.",
   "plano": "Club Premium",
   "whatsapp": "5531996508234",
-  "whatsappRotulo": "Dra. del Secreto en WhatsApp",
+  "whatsappRotulo": "Asistente del Secreto (IA)",
   "resetUrl": "https://n8n.neonature.online/webhook/secreto-reset-db343b64bc894d8a"
 }
 
@@ -38,9 +38,9 @@ export const OFERTAS = {
   "clube": {
     "checkoutUrl": "",
     "vslUrl": "/vsl.es.html",
-    "preco": "R$ 67",
-    "titulo": "Dra. del Secreto en WhatsApp",
-    "subtitulo": "El Secreto de la Insulina te muestra el camino; la Dra. del Secreto recorre ese camino contigo en WhatsApp.",
+    "preco": "US$ 67",
+    "titulo": "Club Secreto Premium",
+    "subtitulo": "El Secreto de la Insulina te muestra el camino; el Asistente del Secreto te acompaña en cada paso, a cualquier hora.",
     "avisoVideo": "Mira el video antes de decidir",
     "beneficios": [
       {
@@ -48,8 +48,8 @@ export const OFERTAS = {
         "descricao": "Fiesta, viaje, SPM, pereza — listos para usar."
       },
       {
-        "titulo": "Dra. del Secreto particular en WhatsApp",
-        "descricao": "Acompañamiento cercano, nunca sola."
+        "titulo": "Asistente del Secreto (IA)",
+        "descricao": "Resuelve tus dudas del programa al instante, dentro del app."
       },
       {
         "titulo": "Mi Evolución",
@@ -58,14 +58,14 @@ export const OFERTAS = {
     ],
     "acessoRotulo": "Acceso completo",
     "pagamentoRotulo": "pago único",
-    "resumo": "Dra. del Secreto durante todos los 21 días + Protocolos y materiales para siempre.",
+    "resumo": "Asistente del Secreto (IA) + Protocolos para imprevistos + Mi Evolución, para siempre.",
     "garantia": "Garantía incondicional de 7 días",
     "itens": [
       "Activación inmediata después del pago",
       "Sin mensualidades, sin sorpresas",
       "Acceso con el mismo inicio de sesión"
     ],
-    "botao": "Quiero tener a la Dra. del Secreto en mi WhatsApp"
+    "botao": "Quiero el acceso Premium"
   }
 }
 

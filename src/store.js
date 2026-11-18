@@ -20,6 +20,11 @@ const ES = {
   'Não foi possível conectar. Tente de novo.': 'No se pudo conectar. Inténtalo de nuevo.',
   'Não foi possível alterar o acesso.': 'No se pudo cambiar el acceso.',
   'Este link expirou ou já foi usado. Peça um novo.': 'Este enlace expiró o ya fue usado. Pide uno nuevo.',
+  'Não foi possível carregar a conversa.': 'No se pudo cargar la conversación.',
+  'Você chegou ao limite de mensagens de hoje. Volte amanhã.': 'Llegaste al límite de mensajes de hoy. Vuelve mañana.',
+  'O assistente é exclusivo do acesso Premium.': 'El asistente es exclusivo del acceso Premium.',
+  'O assistente não conseguiu responder agora. Tente de novo em instantes.': 'El asistente no pudo responder ahora. Inténtalo de nuevo en unos instantes.',
+  'Sua sessão expirou. Entre de novo.': 'Tu sesión expiró. Vuelve a entrar.',
   'Telefone ou senha incorretos.': 'Teléfono o contraseña incorrectos.',
   'Informe seu nome.': 'Ingresa tu nombre.',
   'A senha precisa ter pelo menos 6 caracteres.': 'La contraseña debe tener al menos 6 caracteres.',
@@ -144,6 +149,33 @@ export async function criarConta(nome, telefone, senha) {
   if (error) throw new Error(msg(error.message.includes('registered') ? 'Este telefone ou e-mail já tem conta. Use "Entrar".' : 'Não encontramos uma compra com este telefone ou e-mail. Use o mesmo e-mail da compra.'))
   if (!data.session) throw new Error(msg('Conta criada, mas a confirmação por e-mail está ligada no Supabase. Desligue-a (veja o README).'))
   return comAdmin(usuarioDe(data.user)) // o perfil é criado pelo próprio banco
+}
+
+// ---- assistente (IA): o histórico fica no banco; a resposta vem da função "asistente" do Supabase (Gemini) ----
+export async function historicoChat() {
+  if (DEMO) return local.get('clube.chat', [])
+  const { data, error } = await sb.from('chat_mensagens').select('id, papel, texto').order('id', { ascending: true }).limit(200)
+  if (error) throw new Error(msg('Não foi possível carregar a conversa.'))
+  return data
+}
+
+export async function enviarChat(texto) {
+  if (DEMO) {
+    const lista = local.get('clube.chat', [])
+    const resposta = 'Modo demostración: aquí aparecerá la respuesta del asistente.'
+    local.set('clube.chat', [...lista, { id: Date.now(), papel: 'user', texto }, { id: Date.now() + 1, papel: 'model', texto: resposta }])
+    return { resposta, restantes: null }
+  }
+  const { data, error } = await sb.functions.invoke('asistente', { body: { texto } })
+  if (error) {
+    let corpo = {}
+    try { corpo = await error.context.json() } catch { /* sem corpo */ }
+    if (corpo.erro === 'limite') throw new Error(msg('Você chegou ao limite de mensagens de hoje. Volte amanhã.'))
+    if (corpo.erro === 'premium' || corpo.erro === 'acesso') throw new Error(msg('O assistente é exclusivo do acesso Premium.'))
+    if (corpo.erro === 'sessao') throw new Error(msg('Sua sessão expirou. Entre de novo.'))
+    throw new Error(msg('O assistente não conseguiu responder agora. Tente de novo em instantes.'))
+  }
+  return data
 }
 
 // ---- recuperação de senha (link por e-mail, enviado pelo n8n + Mautic) ----

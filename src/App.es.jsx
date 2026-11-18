@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { HashRouter, Routes, Route, Navigate, NavLink, Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { Crown, Map, Gift, LineChart, User, Check, ChevronLeft, ChevronRight, ChevronDown, MessageCircle, LogOut, FileText, Trash2, ShoppingBasket, ShieldCheck, ChefHat, Clock, Sparkles, Flame, LifeBuoy, Settings, ExternalLink, Salad, X, Volume2, Lock, KeyRound } from 'lucide-react'
+import { Send, Crown, Map, Gift, LineChart, User, Check, ChevronLeft, ChevronRight, ChevronDown, MessageCircle, LogOut, FileText, Trash2, ShoppingBasket, ShieldCheck, ChefHat, Clock, Sparkles, Flame, LifeBuoy, Settings, ExternalLink, Salad, X, Volume2, Lock, KeyRound } from 'lucide-react'
 import { APP, OFERTAS, DIAS, SEMANAS, SEGREDOS, PRESENTES, LISTA_COMPRAS, RECEITAS, CATEGORIAS, RITUAIS, PROTOCOLOS, RECEITA_DO_DIA } from './content.es'
 import * as store from './store'
 import Evolucao from './Evolucao'
@@ -184,22 +184,18 @@ function Moldura({ plano }) {
             <span className="font-serif text-xl font-bold tracking-wide text-white">{APP.nome}</span>
           </Link>
           {premium ? (
-            (OFERTAS.whatsappDraUrl || APP.whatsapp) && (
-              <a
-                href={OFERTAS.whatsappDraUrl || `https://wa.me/${APP.whatsapp}?text=${encodeURIComponent('Necesito ayuda')}`}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-1.5 rounded-full border border-ouro-500/50 bg-azul-800 px-3 py-1.5 text-xs font-semibold text-ouro-300"
-              >
-                <MessageCircle size={15} /> Dra. en WhatsApp
-              </a>
-            )
+            <Link
+              to="/asistente"
+              className="flex items-center gap-1.5 rounded-full border border-ouro-500/50 bg-azul-800 px-3 py-1.5 text-xs font-semibold text-ouro-300"
+            >
+              <Sparkles size={15} /> Asistente IA
+            </Link>
           ) : (
             <Link
               to="/clube"
               className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-ouro-300 to-ouro-500 px-3 py-1.5 text-xs font-bold text-azul-950 shadow-sm"
             >
-              <MessageCircle size={15} /> Dra. en WhatsApp <ChevronRight size={14} />
+              <Crown size={15} /> Premium <ChevronRight size={14} />
             </Link>
           )}
         </header>
@@ -413,6 +409,143 @@ function OfertaSalada() {
   )
 }
 
+// ------------------------------------------------------------------ Cartão do Premium (no lugar da Ensalada, por enquanto)
+function CartaoPremium({ plano }) {
+  const premium = plano !== 'padrao'
+  return (
+    <Link
+      to={premium ? '/asistente' : '/clube'}
+      className="flex w-full items-center gap-3 rounded-2xl bg-gradient-to-br from-ouro-300 to-ouro-500 p-4 text-left text-azul-950 shadow-card transition active:scale-[0.99]"
+    >
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-azul-950/10">
+        {premium ? <Sparkles size={24} className="text-azul-950" /> : <Crown size={24} className="text-azul-950" />}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-black">{premium ? 'Asistente del Secreto (IA)' : 'Club Secreto Premium'}</p>
+        <p className="text-xs font-semibold text-azul-950/75">
+          {premium ? 'Pregunta sobre recetas, rutina e imprevistos' : `Asistente IA, protocolos y tu evolución · ${OFERTAS.clube.preco}`}
+        </p>
+      </div>
+      <ChevronRight size={20} className="shrink-0" />
+    </Link>
+  )
+}
+
+// ------------------------------------------------------------------ Assistente (IA) — exclusivo do Premium
+const SUGESTOES_CHAT = [
+  '¿Cómo preparo el Secreto de hoy?',
+  'Tengo una fiesta este fin de semana, ¿qué hago?',
+  '¿Qué puedo cenar hoy siguiendo el plan?',
+]
+
+function Assistente({ usuario }) {
+  const navegar = useNavigate()
+  const [mensagens, setMensagens] = useState([])
+  const [texto, setTexto] = useState('')
+  const [carregando, setCarregando] = useState(true)
+  const [enviando, setEnviando] = useState(false)
+  const [erro, setErro] = useState('')
+  const [restantes, setRestantes] = useState(null)
+  const fimRef = useRef(null)
+
+  useEffect(() => {
+    store.historicoChat().then(setMensagens).catch((e) => setErro(e.message)).finally(() => setCarregando(false))
+  }, [])
+  useEffect(() => { fimRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }) }, [mensagens, enviando])
+
+  async function enviar(valor) {
+    const t = String(valor ?? texto).trim()
+    if (!t || enviando) return
+    setErro('')
+    setTexto('')
+    setMensagens((m) => [...m, { id: 'eu-' + Date.now(), papel: 'user', texto: t }])
+    setEnviando(true)
+    try {
+      const r = await store.enviarChat(t)
+      setMensagens((m) => [...m, { id: 'ia-' + Date.now(), papel: 'model', texto: r.resposta }])
+      if (r.restantes != null) setRestantes(r.restantes)
+    } catch (e) {
+      setErro(e.message)
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  const primeiroNome = (usuario?.nome || '').trim().split(/\s+/)[0]
+
+  return (
+    <div className="flex min-h-[calc(100vh-10rem)] flex-col pb-4">
+      <button className="flex items-center gap-1 text-sm font-medium text-azul-700" onClick={() => navegar(-1)}>
+        <ChevronLeft size={18} /> Volver
+      </button>
+
+      <div className="mt-3 flex items-center gap-3">
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full border-2 border-ouro-500 bg-azul-900 text-ouro-300">
+          <Sparkles size={22} />
+        </span>
+        <div>
+          <h1 className="font-serif text-xl font-bold text-azul-900">Asistente del Secreto</h1>
+          <p className="text-xs text-azul-700">Asistente virtual con inteligencia artificial</p>
+        </div>
+      </div>
+
+      <p className="mt-3 rounded-xl bg-ouro-100/70 px-3 py-2 text-[12px] leading-snug text-azul-800">
+        Soy una asistente virtual (IA): te ayudo con el programa, las recetas y la rutina. No reemplazo a tu médico. Para dudas de salud, medicamentos o síntomas, consulta a un profesional.
+      </p>
+
+      <div className="mt-4 flex-1 space-y-3">
+        {carregando ? (
+          <p className="py-8 text-center text-sm text-azul-700">Cargando…</p>
+        ) : mensagens.length === 0 ? (
+          <div className="space-y-3 py-2">
+            <div className="max-w-[85%] rounded-2xl rounded-tl-sm bg-white px-4 py-3 text-sm leading-relaxed text-azul-900 shadow-sm">
+              ¡Hola{primeiroNome ? ', ' + primeiroNome : ''}! 💛 Soy el Asistente del Secreto. Pregúntame sobre tu rutina de 21 días, las recetas o qué hacer en un imprevisto.
+            </div>
+            <div className="flex flex-wrap gap-2 pt-1">
+              {SUGESTOES_CHAT.map((s) => (
+                <button key={s} type="button" onClick={() => enviar(s)} className="rounded-full border border-ouro-500/60 bg-white px-3 py-1.5 text-xs font-medium text-azul-900 active:scale-95">
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          mensagens.map((m) => (
+            <div key={m.id} className={`flex ${m.papel === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${m.papel === 'user' ? 'rounded-tr-sm bg-azul-900 text-white' : 'rounded-tl-sm bg-white text-azul-900'}`}>
+                {m.texto}
+              </div>
+            </div>
+          ))
+        )}
+        {enviando && (
+          <div className="flex justify-start">
+            <div className="rounded-2xl rounded-tl-sm bg-white px-4 py-3 text-sm text-azul-700 shadow-sm">Escribiendo…</div>
+          </div>
+        )}
+        <div ref={fimRef} />
+      </div>
+
+      <Erro>{erro}</Erro>
+      <form onSubmit={(e) => { e.preventDefault(); enviar() }} className="sticky bottom-20 mt-3 flex items-end gap-2 rounded-2xl border border-azul-200 bg-white p-2 shadow-card">
+        <textarea
+          rows={1}
+          maxLength={1500}
+          value={texto}
+          onChange={(e) => setTexto(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar() } }}
+          placeholder="Escribe tu pregunta…"
+          className="max-h-32 min-h-[40px] flex-1 resize-none bg-transparent px-2 py-2 text-sm text-azul-900 outline-none"
+        />
+        <button type="submit" disabled={enviando || !texto.trim()} aria-label="Enviar" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-azul-900 text-ouro-300 disabled:opacity-40">
+          <Send size={18} />
+        </button>
+      </form>
+      {restantes != null && <p className="mt-1.5 text-center text-[11px] text-azul-700">Te quedan {restantes} mensajes hoy.</p>}
+    </div>
+  )
+}
+
 // ------------------------------------------------------------------ Oferta Club (/clube — VSL + Checkout)
 function ClubeOferta() {
   const navegar = useNavigate()
@@ -540,7 +673,7 @@ function Inicio({ plano }) {
             {APP.plano}
           </h1>
           <p className="mx-auto mt-3 max-w-[270px] text-[15px] leading-relaxed text-azul-800">
-            Y tienes acceso a la <strong className="font-semibold text-azul-900">Dra. del Secreto en tu WhatsApp</strong>.
+            Y tienes acceso al <strong className="font-semibold text-azul-900">Asistente del Secreto</strong>, tu guía con inteligencia artificial.
           </p>
 
           <Link
@@ -550,6 +683,9 @@ function Inicio({ plano }) {
             <Crown size={18} className="text-ouro-300" strokeWidth={1.8} />
             <span>ACCEDER A MI CLUB</span>
             <ChevronRight size={18} className="text-ouro-300" strokeWidth={2.2} />
+          </Link>
+          <Link to="/asistente" className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-ouro-500/60 bg-white/70 px-6 py-3.5 text-[13px] font-bold uppercase tracking-[0.1em] text-azul-900 transition active:scale-[0.99]">
+            <Sparkles size={17} className="text-ouro-600" /> Hablar con el asistente
           </Link>
         </div>
       ) : (
@@ -576,10 +712,10 @@ function Inicio({ plano }) {
             className="mt-6 flex w-full flex-col items-center rounded-3xl border border-ouro-600 bg-gradient-to-br from-ouro-300 to-ouro-500 px-6 py-7 text-center text-azul-950 shadow-card transition active:scale-[0.99]"
           >
             <span className="mb-3 grid h-12 w-12 place-items-center rounded-full bg-azul-900 text-ouro-300">
-              <MessageCircle size={26} />
+              <Crown size={26} />
             </span>
-            <span className="font-serif text-xs font-semibold uppercase tracking-[0.2em] text-azul-950">Ten a la</span>
-            <span className="my-1 font-serif text-3xl font-bold leading-none text-azul-950">Dra. del Secreto en WhatsApp</span>
+            <span className="font-serif text-xs font-semibold uppercase tracking-[0.2em] text-azul-950">Acceso</span>
+            <span className="my-1 font-serif text-3xl font-bold leading-none text-azul-950">Club Secreto Premium</span>
             <span className="mb-3 mt-1 flex w-28 items-center gap-2 opacity-60">
               <span className="h-px flex-1 bg-azul-950" />
               <span className="text-[10px]">✦</span>
@@ -601,7 +737,7 @@ function Inicio({ plano }) {
 }
 
 // ------------------------------------------------------------------ Jornada
-function Jornada({ feitos }) {
+function Jornada({ feitos, plano }) {
   const hoje = DIAS.find((d) => !feitos.includes(d.dia))?.dia
   const pct = Math.round((feitos.length / DIAS.length) * 100)
   return (
@@ -637,7 +773,8 @@ function Jornada({ feitos }) {
           <ChevronRight size={18} className="text-azul-700" />
         </Link>
 
-        <OfertaSalada />
+        {/* A oferta da Ensalada (OfertaSalada) volta aqui quando o link de compra estiver pronto. */}
+        <CartaoPremium plano={plano} />
 
         <Link to="/receitas" className="flex items-center gap-4 rounded-2xl bg-gradient-to-br from-ouro-300 to-ouro-500 p-4 text-azul-950 shadow-card">
           <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-white/40"><ChefHat size={22} /></div>
@@ -1570,7 +1707,7 @@ function SoPremium({ plano, children }) {
       </div>
       <p className="sobretitulo">Exclusivo del Club Premium</p>
       <h1 className="titulo text-2xl">Este contenido es del acceso Premium</h1>
-      <p className="mx-auto max-w-[300px] text-sm leading-relaxed text-azul-800">Forma parte del Club, junto con la Dra. del Secreto acompañándote en WhatsApp.</p>
+      <p className="mx-auto max-w-[300px] text-sm leading-relaxed text-azul-800">Forma parte del Club Premium: Asistente del Secreto (IA), protocolos para imprevistos y tu evolución.</p>
       <Link to="/clube" className="btn-ouro w-full"><Crown size={18} /> Conocer el Club</Link>
       <Link to="/jornada" className="block text-sm font-medium text-azul-700 underline">Volver al camino</Link>
     </div>
@@ -1623,7 +1760,7 @@ export default function App() {
       <Routes>
         <Route element={<Moldura plano={plano} />}>
           <Route path="/" element={<Inicio usuario={usuario} feitos={feitos} plano={plano} />} />
-          <Route path="/jornada" element={<Jornada feitos={feitos} />} />
+          <Route path="/jornada" element={<Jornada feitos={feitos} plano={plano} />} />
           <Route path="/jornada/:n" element={<Dia feitos={feitos} aoMarcar={marcar} />} />
           <Route path="/compras" element={<Compras />} />
           <Route path="/receitas" element={<Receitas />} />
@@ -1633,6 +1770,7 @@ export default function App() {
           <Route path="/rituais" element={<Rituais />} />
           <Route path="/rituais/:id" element={<Ritual />} />
           <Route path="/clube" element={<ClubeOferta />} />
+          <Route path="/asistente" element={<SoPremium plano={plano}><Assistente usuario={usuario} /></SoPremium>} />
           <Route path="/admin" element={<Admin usuario={usuario} />} />
           <Route path="/evolucao" element={<SoPremium plano={plano}><Evolucao usuario={usuario} total={DIAS.length} nomeApp={APP.nome} /></SoPremium>} />
           <Route path="/presentes" element={<Presentes />} />

@@ -468,6 +468,26 @@ revoke execute on function public.pedir_reset(text, text) from public, authentic
 grant execute on function public.pedir_reset(text, text) to anon;
 grant execute on function public.redefinir_com_token(text, text) to anon, authenticated;
 
+-- ---------------------------------------------------------------- assistente (IA): histórico das conversas
+-- A função "asistente" (Supabase Edge Function) lê e grava aqui com a sessão da própria cliente.
+create table if not exists public.chat_mensagens (
+  id bigserial primary key,
+  user_id uuid not null default auth.uid() references auth.users on delete cascade,
+  papel text not null check (papel in ('user', 'model')),
+  texto text not null check (length(texto) <= 8000),
+  criado_em timestamptz not null default now()
+);
+create index if not exists chat_mensagens_user on public.chat_mensagens (user_id, id desc);
+alter table public.chat_mensagens enable row level security;
+revoke all on public.chat_mensagens from anon;
+revoke update, delete on public.chat_mensagens from authenticated;
+grant select, insert on public.chat_mensagens to authenticated;
+grant usage on sequence public.chat_mensagens_id_seq to authenticated;
+drop policy if exists "chat proprio leitura" on public.chat_mensagens;
+drop policy if exists "chat proprio insercao" on public.chat_mensagens;
+create policy "chat proprio leitura" on public.chat_mensagens for select using (auth.uid() = user_id);
+create policy "chat proprio insercao" on public.chat_mensagens for insert with check (auth.uid() = user_id);
+
 -- ---------------------------------------------------------------- primeira administradora
 -- 1) Libere o seu próprio telefone (troque pelo seu número, só dígitos, com DDD):
 --      insert into public.acessos (telefone, nome) values ('85999999999', 'Seu nome');
