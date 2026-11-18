@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { HashRouter, Routes, Route, Navigate, NavLink, Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { Send, Crown, Map, Gift, LineChart, User, Check, ChevronLeft, ChevronRight, ChevronDown, MessageCircle, LogOut, FileText, Trash2, ShoppingBasket, ShieldCheck, ChefHat, Clock, Sparkles, Flame, LifeBuoy, Settings, ExternalLink, Salad, X, Volume2, Lock, KeyRound } from 'lucide-react'
+import { Send, Crown, Map, Gift, LineChart, User, Check, ChevronLeft, ChevronRight, ChevronDown, MessageCircle, LogOut, FileText, Trash2, ShoppingBasket, ShieldCheck, ChefHat, Clock, Sparkles, Flame, LifeBuoy, Settings, ExternalLink, Salad, X, Volume2, Lock, KeyRound, Stethoscope } from 'lucide-react'
 import { APP, OFERTAS, DIAS, SEMANAS, SEGREDOS, PRESENTES, LISTA_COMPRAS, RECEITAS, CATEGORIAS, RITUAIS, PROTOCOLOS, RECEITA_DO_DIA } from './content.es'
 import * as store from './store'
 import Evolucao from './Evolucao'
@@ -191,24 +191,24 @@ function Moldura({ plano }) {
   return (
     <div className="mx-auto flex h-full max-w-md flex-col overflow-hidden">
       {!naCapa && (
-        <header className="z-20 flex shrink-0 items-center justify-between gap-3 bg-azul-900 px-5 py-4 shadow-sm">
-          <Link to="/" className="flex min-w-0 items-center gap-2.5">
-            <Marca tamanho="h-10 w-10 shrink-0 text-base" />
-            <span className="whitespace-nowrap font-serif text-lg font-bold tracking-wide text-white min-[400px]:text-xl">{APP.nome}</span>
+        <header className="z-20 flex shrink-0 items-center justify-between gap-2 bg-azul-900 px-3.5 py-3.5 shadow-sm">
+          <Link to="/" className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+            <Marca tamanho="h-9 w-9 shrink-0 text-sm" />
+            <span className="truncate font-serif text-[16px] font-bold tracking-normal text-white sm:text-lg">{APP.nome}</span>
           </Link>
           {premium ? (
             <Link
               to="/asistente"
-              className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-ouro-500/50 bg-azul-800 px-3 py-1.5 text-xs font-semibold text-ouro-300"
+              className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-ouro-500/50 bg-azul-800 px-2.5 py-1.5 text-[11.5px] font-semibold text-ouro-300"
             >
-              <Sparkles size={15} /> Habla con la Dra.
+              <Stethoscope size={14} className="shrink-0" /> Habla con la Dra.
             </Link>
           ) : (
             <Link
               to="/clube"
-              className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-gradient-to-r from-ouro-300 to-ouro-500 px-3 py-1.5 text-xs font-bold text-azul-950 shadow-sm"
+              className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-gradient-to-r from-ouro-300 to-ouro-500 px-2.5 py-1.5 text-[11.5px] font-bold text-azul-950 shadow-sm"
             >
-              <Crown size={15} /> Premium <ChevronRight size={14} />
+              <Crown size={14} className="shrink-0" /> Premium <ChevronRight size={13} />
             </Link>
           )}
         </header>
@@ -433,7 +433,7 @@ function CartaoPremium({ plano }) {
       className="flex w-full items-center gap-3 rounded-2xl bg-gradient-to-br from-ouro-300 to-ouro-500 p-4 text-left text-azul-950 shadow-card transition active:scale-[0.99]"
     >
       <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-azul-950/10">
-        {premium ? <Sparkles size={24} className="text-azul-950" /> : <Crown size={24} className="text-azul-950" />}
+        {premium ? <Stethoscope size={24} className="text-azul-950" /> : <Crown size={24} className="text-azul-950" />}
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-black">{premium ? 'Habla con la Dra.' : 'Club Secreto Premium'}</p>
@@ -547,7 +547,7 @@ function Assistente({ usuario }) {
 
       <div className="mt-2 flex shrink-0 items-center gap-3">
         <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full border-2 border-ouro-500 bg-azul-900 text-ouro-300">
-          <Sparkles size={22} />
+          <Stethoscope size={22} />
         </span>
         <div>
           <h1 className="font-serif text-xl font-bold text-azul-900">Habla con la Dra.</h1>
@@ -616,7 +616,7 @@ function ClubeOferta() {
   const navegar = useNavigate()
   const c = OFERTAS.clube
   const [aviso, setAviso] = useState('')
-  const iconesBeneficios = [LifeBuoy, MessageCircle, LineChart]
+  const iconesBeneficios = [LifeBuoy, Stethoscope, LineChart]
 
   function comprar() {
     if (!c.checkoutUrl) return setAviso('El enlace de compra todavía no está disponible. Inténtalo de nuevo más tarde.')
@@ -750,7 +750,7 @@ function Inicio({ plano }) {
             <ChevronRight size={18} className="text-ouro-300" strokeWidth={2.2} />
           </Link>
           <Link to="/asistente" className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-ouro-500/60 bg-white/70 px-6 py-3.5 text-[13px] font-bold uppercase tracking-[0.1em] text-azul-900 transition active:scale-[0.99]">
-            <Sparkles size={17} className="text-ouro-600" /> Habla con la Dra.
+            <Stethoscope size={17} className="text-ouro-600" /> Habla con la Dra.
           </Link>
         </div>
       ) : (

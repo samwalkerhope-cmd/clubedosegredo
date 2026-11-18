@@ -190,10 +190,10 @@ function Moldura({ plano }) {
   return (
     <div className="mx-auto flex h-full max-w-md flex-col overflow-hidden">
       {!naCapa && (
-        <header className="z-20 flex shrink-0 items-center justify-between gap-3 bg-azul-900 px-5 py-4 shadow-sm">
-          <Link to="/" className="flex min-w-0 items-center gap-2.5">
-            <Marca tamanho="h-10 w-10 shrink-0 text-base" />
-            <span className="whitespace-nowrap font-serif text-lg font-bold tracking-wide text-white min-[400px]:text-xl">{APP.nome}</span>
+        <header className="z-20 flex shrink-0 items-center justify-between gap-2 bg-azul-900 px-3.5 py-3.5 shadow-sm">
+          <Link to="/" className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+            <Marca tamanho="h-9 w-9 shrink-0 text-sm" />
+            <span className="truncate font-serif text-[16px] font-bold tracking-normal text-white sm:text-lg">{APP.nome}</span>
           </Link>
           {premium ? (
             (OFERTAS.whatsappDraUrl || APP.whatsapp) && (
@@ -201,17 +201,17 @@ function Moldura({ plano }) {
                 href={OFERTAS.whatsappDraUrl || `https://wa.me/${APP.whatsapp}?text=${encodeURIComponent('Preciso de ajuda')}`}
                 target="_blank"
                 rel="noreferrer"
-                className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-ouro-500/50 bg-azul-800 px-3 py-1.5 text-xs font-semibold text-ouro-300"
+                className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-ouro-500/50 bg-azul-800 px-2.5 py-1.5 text-[11.5px] font-semibold text-ouro-300"
               >
-                <MessageCircle size={15} /> Dra. no WhatsApp
+                <MessageCircle size={14} className="shrink-0" /> Dra. no WhatsApp
               </a>
             )
           ) : (
             <Link
               to="/clube"
-              className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-gradient-to-r from-ouro-300 to-ouro-500 px-3 py-1.5 text-xs font-bold text-azul-950 shadow-sm"
+              className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-gradient-to-r from-ouro-300 to-ouro-500 px-2.5 py-1.5 text-[11.5px] font-bold text-azul-950 shadow-sm"
             >
-              <MessageCircle size={15} /> Dra. no WhatsApp <ChevronRight size={14} />
+              <MessageCircle size={14} className="shrink-0" /> Dra. no WhatsApp <ChevronRight size={13} />
             </Link>
           )}
         </header>
