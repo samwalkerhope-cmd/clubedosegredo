@@ -188,7 +188,7 @@ function Moldura({ plano }) {
               to="/asistente"
               className="flex items-center gap-1.5 rounded-full border border-ouro-500/50 bg-azul-800 px-3 py-1.5 text-xs font-semibold text-ouro-300"
             >
-              <Sparkles size={15} /> Asistente IA
+              <Sparkles size={15} /> Habla con la Dra.
             </Link>
           ) : (
             <Link
@@ -421,9 +421,9 @@ function CartaoPremium({ plano }) {
         {premium ? <Sparkles size={24} className="text-azul-950" /> : <Crown size={24} className="text-azul-950" />}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-black">{premium ? 'Asistente del Secreto (IA)' : 'Club Secreto Premium'}</p>
+        <p className="text-sm font-black">{premium ? 'Habla con la Dra.' : 'Club Secreto Premium'}</p>
         <p className="text-xs font-semibold text-azul-950/75">
-          {premium ? 'Pregunta sobre recetas, rutina e imprevistos' : `Asistente IA, protocolos y tu evolución · ${OFERTAS.clube.preco}`}
+          {premium ? 'Pregunta sobre recetas, rutina e imprevistos' : `Habla con la Dra., protocolos y tu evolución · ${OFERTAS.clube.preco}`}
         </p>
       </div>
       <ChevronRight size={20} className="shrink-0" />
@@ -432,6 +432,54 @@ function CartaoPremium({ plano }) {
 }
 
 // ------------------------------------------------------------------ Assistente (IA) — exclusivo do Premium
+// Mostra a resposta da IA com formatação simples: **negrito**, *itálico*, listas (- ou 1.) e parágrafos.
+// Monta elementos React (nunca HTML cru), então nada do texto vira código na página.
+function trechos(s, chave) {
+  const partes = []
+  const re = /(\*\*[^*\n]+\*\*|__[^_\n]+__|\*[^*\s][^*\n]*\*)/g
+  let ultimo = 0, m, i = 0
+  while ((m = re.exec(s))) {
+    if (m.index > ultimo) partes.push(s.slice(ultimo, m.index))
+    const t = m[0]
+    partes.push(t.startsWith('**') || t.startsWith('__')
+      ? <strong key={chave + '-' + i++} className="font-semibold">{t.slice(2, -2)}</strong>
+      : <em key={chave + '-' + i++}>{t.slice(1, -1)}</em>)
+    ultimo = m.index + t.length
+  }
+  if (ultimo < s.length) partes.push(s.slice(ultimo))
+  return partes
+}
+
+function TextoFormatado({ texto }) {
+  const blocos = []
+  let lista = null
+  for (const bruta of String(texto || '').replace(/\r/g, '').split('\n')) {
+    const linha = bruta.trim()
+    const marcador = linha.match(/^[-*•]\s+(.*)$/)
+    const numero = linha.match(/^(\d+)[.)]\s+(.*)$/)
+    if (marcador || numero) {
+      const tipo = numero ? 'ol' : 'ul'
+      if (!lista || lista.tipo !== tipo) { lista = { tipo, inicio: numero ? Number(numero[1]) : 1, itens: [] }; blocos.push(lista) }
+      lista.itens.push(numero ? numero[2] : marcador[1])
+      continue
+    }
+    lista = null
+    if (!linha) continue
+    const titulo = linha.match(/^#{1,6}\s+(.*)$/)
+    blocos.push({ tipo: titulo ? 'titulo' : 'p', texto: titulo ? titulo[1] : linha })
+  }
+  return (
+    <div className="space-y-2">
+      {blocos.map((b, i) => {
+        if (b.tipo === 'ul') return <ul key={i} className="list-disc space-y-1 pl-5 marker:text-ouro-600">{b.itens.map((it, j) => <li key={j}>{trechos(it, i + '-' + j)}</li>)}</ul>
+        if (b.tipo === 'ol') return <ol key={i} start={b.inicio} className="list-decimal space-y-1 pl-5 marker:font-semibold marker:text-ouro-700">{b.itens.map((it, j) => <li key={j}>{trechos(it, i + '-' + j)}</li>)}</ol>
+        if (b.tipo === 'titulo') return <p key={i} className="font-semibold">{trechos(b.texto, i)}</p>
+        return <p key={i}>{trechos(b.texto, i)}</p>
+      })}
+    </div>
+  )
+}
+
 const SUGESTOES_CHAT = [
   '¿Cómo preparo el Secreto de hoy?',
   'Tengo una fiesta este fin de semana, ¿qué hago?',
@@ -484,13 +532,13 @@ function Assistente({ usuario }) {
           <Sparkles size={22} />
         </span>
         <div>
-          <h1 className="font-serif text-xl font-bold text-azul-900">Asistente del Secreto</h1>
-          <p className="text-xs text-azul-700">Asistente virtual con inteligencia artificial</p>
+          <h1 className="font-serif text-xl font-bold text-azul-900">Habla con la Dra.</h1>
+          <p className="text-xs text-azul-700">Dra. del Secreto · Tu guía diaria</p>
         </div>
       </div>
 
       <p className="mt-3 rounded-xl bg-ouro-100/70 px-3 py-2 text-[12px] leading-snug text-azul-800">
-        Soy una asistente virtual (IA): te ayudo con el programa, las recetas y la rutina. No reemplazo a tu médico. Para dudas de salud, medicamentos o síntomas, consulta a un profesional.
+        Te ayudo con el programa, las recetas y la rutina. Para dudas de salud, medicamentos o síntomas.
       </p>
 
       <div className="mt-4 flex-1 space-y-3">
@@ -499,7 +547,7 @@ function Assistente({ usuario }) {
         ) : mensagens.length === 0 ? (
           <div className="space-y-3 py-2">
             <div className="max-w-[85%] rounded-2xl rounded-tl-sm bg-white px-4 py-3 text-sm leading-relaxed text-azul-900 shadow-sm">
-              ¡Hola{primeiroNome ? ', ' + primeiroNome : ''}! 💛 Soy el Asistente del Secreto. Pregúntame sobre tu rutina de 21 días, las recetas o qué hacer en un imprevisto.
+              ¡Hola{primeiroNome ? ', ' + primeiroNome : ''}! 💛 Soy la Dra. del Secreto. Pregúntame sobre tu rutina de 21 días, las recetas o qué hacer en un imprevisto.
             </div>
             <div className="flex flex-wrap gap-2 pt-1">
               {SUGESTOES_CHAT.map((s) => (
@@ -512,8 +560,8 @@ function Assistente({ usuario }) {
         ) : (
           mensagens.map((m) => (
             <div key={m.id} className={`flex ${m.papel === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${m.papel === 'user' ? 'rounded-tr-sm bg-azul-900 text-white' : 'rounded-tl-sm bg-white text-azul-900'}`}>
-                {m.texto}
+              <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${m.papel === 'user' ? 'whitespace-pre-wrap rounded-tr-sm bg-azul-900 text-white' : 'rounded-tl-sm bg-white text-azul-900'}`}>
+                {m.papel === 'user' ? m.texto : <TextoFormatado texto={m.texto} />}
               </div>
             </div>
           ))
@@ -673,7 +721,7 @@ function Inicio({ plano }) {
             {APP.plano}
           </h1>
           <p className="mx-auto mt-3 max-w-[270px] text-[15px] leading-relaxed text-azul-800">
-            Y tienes acceso al <strong className="font-semibold text-azul-900">Asistente del Secreto</strong>, tu guía con inteligencia artificial.
+            Y tienes acceso a la <strong className="font-semibold text-azul-900">Dra. del Secreto</strong> para acompañarte cada día.
           </p>
 
           <Link
@@ -685,7 +733,7 @@ function Inicio({ plano }) {
             <ChevronRight size={18} className="text-ouro-300" strokeWidth={2.2} />
           </Link>
           <Link to="/asistente" className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-ouro-500/60 bg-white/70 px-6 py-3.5 text-[13px] font-bold uppercase tracking-[0.1em] text-azul-900 transition active:scale-[0.99]">
-            <Sparkles size={17} className="text-ouro-600" /> Hablar con el asistente
+            <Sparkles size={17} className="text-ouro-600" /> Habla con la Dra.
           </Link>
         </div>
       ) : (
@@ -1707,7 +1755,7 @@ function SoPremium({ plano, children }) {
       </div>
       <p className="sobretitulo">Exclusivo del Club Premium</p>
       <h1 className="titulo text-2xl">Este contenido es del acceso Premium</h1>
-      <p className="mx-auto max-w-[300px] text-sm leading-relaxed text-azul-800">Forma parte del Club Premium: Asistente del Secreto (IA), protocolos para imprevistos y tu evolución.</p>
+      <p className="mx-auto max-w-[300px] text-sm leading-relaxed text-azul-800">Forma parte del Club Premium: Habla con la Dra., protocolos para imprevistos y tu evolución.</p>
       <Link to="/clube" className="btn-ouro w-full"><Crown size={18} /> Conocer el Club</Link>
       <Link to="/jornada" className="block text-sm font-medium text-azul-700 underline">Volver al camino</Link>
     </div>

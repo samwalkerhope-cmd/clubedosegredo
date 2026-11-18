@@ -22,8 +22,8 @@ const ES = {
   'Este link expirou ou já foi usado. Peça um novo.': 'Este enlace expiró o ya fue usado. Pide uno nuevo.',
   'Não foi possível carregar a conversa.': 'No se pudo cargar la conversación.',
   'Você chegou ao limite de mensagens de hoje. Volte amanhã.': 'Llegaste al límite de mensajes de hoy. Vuelve mañana.',
-  'O assistente é exclusivo do acesso Premium.': 'El asistente es exclusivo del acceso Premium.',
-  'O assistente não conseguiu responder agora. Tente de novo em instantes.': 'El asistente no pudo responder ahora. Inténtalo de nuevo en unos instantes.',
+  'O assistente é exclusivo do acesso Premium.': 'Habla con la Dra. es exclusivo del acceso Premium.',
+  'O assistente não conseguiu responder agora. Tente de novo em instantes.': 'La Dra. no pudo responder ahora. Inténtalo de nuevo en unos instantes.',
   'Sua sessão expirou. Entre de novo.': 'Tu sesión expiró. Vuelve a entrar.',
   'Telefone ou senha incorretos.': 'Teléfono o contraseña incorrectos.',
   'Informe seu nome.': 'Ingresa tu nombre.',
@@ -162,7 +162,7 @@ export async function historicoChat() {
 export async function enviarChat(texto) {
   if (DEMO) {
     const lista = local.get('clube.chat', [])
-    const resposta = 'Modo demostración: aquí aparecerá la respuesta del asistente.'
+    const resposta = 'Modo demostración: aquí aparecerá la respuesta de la Dra.'
     local.set('clube.chat', [...lista, { id: Date.now(), papel: 'user', texto }, { id: Date.now() + 1, papel: 'model', texto: resposta }])
     return { resposta, restantes: null }
   }

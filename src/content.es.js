@@ -8,7 +8,7 @@ export const APP = {
   "frase": "No estás sola. Sin presión, solo dirección.",
   "plano": "Club Premium",
   "whatsapp": "5531996508234",
-  "whatsappRotulo": "Asistente del Secreto (IA)",
+  "whatsappRotulo": "Habla con la Dra.",
   "resetUrl": "https://n8n.neonature.online/webhook/secreto-reset-db343b64bc894d8a"
 }
 
@@ -40,7 +40,7 @@ export const OFERTAS = {
     "vslUrl": "/vsl.es.html",
     "preco": "US$ 67",
     "titulo": "Club Secreto Premium",
-    "subtitulo": "El Secreto de la Insulina te muestra el camino; el Asistente del Secreto te acompaña en cada paso, a cualquier hora.",
+    "subtitulo": "El Secreto de la Insulina te muestra el camino; la Dra. del Secreto te acompaña en cada paso, a cualquier hora.",
     "avisoVideo": "Mira el video antes de decidir",
     "beneficios": [
       {
@@ -48,7 +48,7 @@ export const OFERTAS = {
         "descricao": "Fiesta, viaje, SPM, pereza — listos para usar."
       },
       {
-        "titulo": "Asistente del Secreto (IA)",
+        "titulo": "Habla con la Dra.",
         "descricao": "Resuelve tus dudas del programa al instante, dentro del app."
       },
       {
@@ -58,7 +58,7 @@ export const OFERTAS = {
     ],
     "acessoRotulo": "Acceso completo",
     "pagamentoRotulo": "pago único",
-    "resumo": "Asistente del Secreto (IA) + Protocolos para imprevistos + Mi Evolución, para siempre.",
+    "resumo": "Habla con la Dra. + Protocolos para imprevistos + Mi Evolución, para siempre.",
     "garantia": "Garantía incondicional de 7 días",
     "itens": [
       "Activación inmediata después del pago",
