@@ -162,6 +162,18 @@ function NovaSenha({ token, aoTerminar }) {
   )
 }
 
+// ------------------------------------------------------------------ Rolagem
+// Cada tela nova abre do topo (sem herdar a rolagem da tela anterior).
+// No app, só o conteúdo do meio (#conteudo) rola; o topo e a barra de baixo ficam fixos.
+function RolarParaTopo() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    document.getElementById('conteudo')?.scrollTo(0, 0)
+    window.scrollTo(0, 0)
+  }, [pathname])
+  return null
+}
+
 // ------------------------------------------------------------------ Moldura
 const abas = [
   { para: '/', rotulo: 'Inicio', Icone: Crown, fim: true },
@@ -175,33 +187,36 @@ function Moldura({ plano }) {
   const { pathname } = useLocation()
   const naCapa = pathname === '/'
   const premium = plano !== 'padrao'
+  const telaChat = pathname === '/asistente' && premium
   return (
-    <div className="mx-auto flex min-h-full max-w-md flex-col">
+    <div className="mx-auto flex h-full max-w-md flex-col overflow-hidden">
       {!naCapa && (
-        <header className="flex items-center justify-between gap-3 bg-azul-900 px-5 py-4">
-          <Link to="/" className="flex items-center gap-3">
-            <Marca tamanho="h-10 w-10 text-base" />
-            <span className="font-serif text-xl font-bold tracking-wide text-white">{APP.nome}</span>
+        <header className="z-20 flex shrink-0 items-center justify-between gap-3 bg-azul-900 px-5 py-4 shadow-sm">
+          <Link to="/" className="flex min-w-0 items-center gap-2.5">
+            <Marca tamanho="h-10 w-10 shrink-0 text-base" />
+            <span className="whitespace-nowrap font-serif text-lg font-bold tracking-wide text-white min-[400px]:text-xl">{APP.nome}</span>
           </Link>
           {premium ? (
             <Link
               to="/asistente"
-              className="flex items-center gap-1.5 rounded-full border border-ouro-500/50 bg-azul-800 px-3 py-1.5 text-xs font-semibold text-ouro-300"
+              className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-ouro-500/50 bg-azul-800 px-3 py-1.5 text-xs font-semibold text-ouro-300"
             >
               <Sparkles size={15} /> Habla con la Dra.
             </Link>
           ) : (
             <Link
               to="/clube"
-              className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-ouro-300 to-ouro-500 px-3 py-1.5 text-xs font-bold text-azul-950 shadow-sm"
+              className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-gradient-to-r from-ouro-300 to-ouro-500 px-3 py-1.5 text-xs font-bold text-azul-950 shadow-sm"
             >
               <Crown size={15} /> Premium <ChevronRight size={14} />
             </Link>
           )}
         </header>
       )}
-      <main className="flex-1 px-5 pb-28 pt-6"><Outlet /></main>
-      <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-azul-100 bg-white">
+      <main id="conteudo" className={telaChat ? 'flex min-h-0 flex-1 flex-col px-5 pb-3 pt-3' : 'min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-8 pt-6'}>
+        <Outlet />
+      </main>
+      <nav className="z-20 shrink-0 border-t border-azul-100 bg-white" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="mx-auto flex max-w-md">
           {abas.map(({ para, rotulo, Icone, fim }) => (
             <NavLink key={para} to={para} end={fim}
@@ -494,12 +509,15 @@ function Assistente({ usuario }) {
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState('')
   const [restantes, setRestantes] = useState(null)
-  const fimRef = useRef(null)
+  const listaRef = useRef(null)
 
   useEffect(() => {
     store.historicoChat().then(setMensagens).catch((e) => setErro(e.message)).finally(() => setCarregando(false))
   }, [])
-  useEffect(() => { fimRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }) }, [mensagens, enviando])
+  useEffect(() => {
+    const el = listaRef.current
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+  }, [mensagens, enviando, carregando])
 
   async function enviar(valor) {
     const t = String(valor ?? texto).trim()
@@ -522,12 +540,12 @@ function Assistente({ usuario }) {
   const primeiroNome = (usuario?.nome || '').trim().split(/\s+/)[0]
 
   return (
-    <div className="flex min-h-[calc(100vh-10rem)] flex-col pb-4">
-      <button className="flex items-center gap-1 text-sm font-medium text-azul-700" onClick={() => navegar(-1)}>
+    <div className="flex h-full min-h-0 flex-col">
+      <button className="flex shrink-0 items-center gap-1 self-start text-sm font-medium text-azul-700" onClick={() => navegar(-1)}>
         <ChevronLeft size={18} /> Volver
       </button>
 
-      <div className="mt-3 flex items-center gap-3">
+      <div className="mt-2 flex shrink-0 items-center gap-3">
         <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full border-2 border-ouro-500 bg-azul-900 text-ouro-300">
           <Sparkles size={22} />
         </span>
@@ -537,11 +555,11 @@ function Assistente({ usuario }) {
         </div>
       </div>
 
-      <p className="mt-3 rounded-xl bg-ouro-100/70 px-3 py-2 text-[12px] leading-snug text-azul-800">
+      <p className="mt-2 shrink-0 rounded-xl bg-ouro-100/70 px-3 py-2 text-[12px] leading-snug text-azul-800">
         Te ayudo con el programa, las recetas y la rutina. Para dudas de salud, medicamentos o síntomas.
       </p>
 
-      <div className="mt-4 flex-1 space-y-3">
+      <div ref={listaRef} className="-mx-1 mt-3 min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-1 pb-2">
         {carregando ? (
           <p className="py-8 text-center text-sm text-azul-700">Cargando…</p>
         ) : mensagens.length === 0 ? (
@@ -571,11 +589,10 @@ function Assistente({ usuario }) {
             <div className="rounded-2xl rounded-tl-sm bg-white px-4 py-3 text-sm text-azul-700 shadow-sm">Escribiendo…</div>
           </div>
         )}
-        <div ref={fimRef} />
       </div>
 
-      <Erro>{erro}</Erro>
-      <form onSubmit={(e) => { e.preventDefault(); enviar() }} className="sticky bottom-20 mt-3 flex items-end gap-2 rounded-2xl border border-azul-200 bg-white p-2 shadow-card">
+      {erro && <div className="mt-2 shrink-0"><Erro>{erro}</Erro></div>}
+      <form onSubmit={(e) => { e.preventDefault(); enviar() }} className="mt-2 flex shrink-0 items-end gap-2 rounded-2xl border border-azul-200 bg-white p-2 shadow-card">
         <textarea
           rows={1}
           maxLength={1500}
@@ -583,13 +600,13 @@ function Assistente({ usuario }) {
           onChange={(e) => setTexto(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar() } }}
           placeholder="Escribe tu pregunta…"
-          className="max-h-32 min-h-[40px] flex-1 resize-none bg-transparent px-2 py-2 text-sm text-azul-900 outline-none"
+          className="max-h-32 min-h-[40px] flex-1 resize-none bg-transparent px-2 py-2 text-base text-azul-900 outline-none"
         />
         <button type="submit" disabled={enviando || !texto.trim()} aria-label="Enviar" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-azul-900 text-ouro-300 disabled:opacity-40">
           <Send size={18} />
         </button>
       </form>
-      {restantes != null && <p className="mt-1.5 text-center text-[11px] text-azul-700">Te quedan {restantes} mensajes hoy.</p>}
+      {restantes != null && <p className="mt-1 shrink-0 text-center text-[11px] text-azul-700">Te quedan {restantes} mensajes hoy.</p>}
     </div>
   )
 }
@@ -686,7 +703,7 @@ function ClubeOferta() {
 function Inicio({ plano }) {
   const premium = plano !== 'padrao'
   return (
-    <div className="relative flex min-h-[calc(100vh-8.5rem)] flex-col justify-between py-2 text-center">
+    <div className="relative flex min-h-full flex-col justify-between py-2 text-center">
       <Link
         to="/perfil"
         aria-label="Mi cuenta"
@@ -1805,6 +1822,7 @@ export default function App() {
 
   return (
     <HashRouter>
+      <RolarParaTopo />
       <Routes>
         <Route element={<Moldura plano={plano} />}>
           <Route path="/" element={<Inicio usuario={usuario} feitos={feitos} plano={plano} />} />

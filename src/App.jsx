@@ -162,6 +162,18 @@ function NovaSenha({ token, aoTerminar }) {
   )
 }
 
+// ------------------------------------------------------------------ Rolagem
+// Cada tela nova abre do topo (sem herdar a rolagem da tela anterior).
+// No app, só o conteúdo do meio (#conteudo) rola; o topo e a barra de baixo ficam fixos.
+function RolarParaTopo() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    document.getElementById('conteudo')?.scrollTo(0, 0)
+    window.scrollTo(0, 0)
+  }, [pathname])
+  return null
+}
+
 // ------------------------------------------------------------------ Moldura
 const abas = [
   { para: '/', rotulo: 'Início', Icone: Crown, fim: true },
@@ -176,12 +188,12 @@ function Moldura({ plano }) {
   const naCapa = pathname === '/'
   const premium = plano !== 'padrao'
   return (
-    <div className="mx-auto flex min-h-full max-w-md flex-col">
+    <div className="mx-auto flex h-full max-w-md flex-col overflow-hidden">
       {!naCapa && (
-        <header className="flex items-center justify-between gap-3 bg-azul-900 px-5 py-4">
-          <Link to="/" className="flex items-center gap-3">
-            <Marca tamanho="h-10 w-10 text-base" />
-            <span className="font-serif text-xl font-bold tracking-wide text-white">{APP.nome}</span>
+        <header className="z-20 flex shrink-0 items-center justify-between gap-3 bg-azul-900 px-5 py-4 shadow-sm">
+          <Link to="/" className="flex min-w-0 items-center gap-2.5">
+            <Marca tamanho="h-10 w-10 shrink-0 text-base" />
+            <span className="whitespace-nowrap font-serif text-lg font-bold tracking-wide text-white min-[400px]:text-xl">{APP.nome}</span>
           </Link>
           {premium ? (
             (OFERTAS.whatsappDraUrl || APP.whatsapp) && (
@@ -189,7 +201,7 @@ function Moldura({ plano }) {
                 href={OFERTAS.whatsappDraUrl || `https://wa.me/${APP.whatsapp}?text=${encodeURIComponent('Preciso de ajuda')}`}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-1.5 rounded-full border border-ouro-500/50 bg-azul-800 px-3 py-1.5 text-xs font-semibold text-ouro-300"
+                className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-ouro-500/50 bg-azul-800 px-3 py-1.5 text-xs font-semibold text-ouro-300"
               >
                 <MessageCircle size={15} /> Dra. no WhatsApp
               </a>
@@ -197,15 +209,17 @@ function Moldura({ plano }) {
           ) : (
             <Link
               to="/clube"
-              className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-ouro-300 to-ouro-500 px-3 py-1.5 text-xs font-bold text-azul-950 shadow-sm"
+              className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-gradient-to-r from-ouro-300 to-ouro-500 px-3 py-1.5 text-xs font-bold text-azul-950 shadow-sm"
             >
               <MessageCircle size={15} /> Dra. no WhatsApp <ChevronRight size={14} />
             </Link>
           )}
         </header>
       )}
-      <main className="flex-1 px-5 pb-28 pt-6"><Outlet /></main>
-      <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-azul-100 bg-white">
+      <main id="conteudo" className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-8 pt-6">
+        <Outlet />
+      </main>
+      <nav className="z-20 shrink-0 border-t border-azul-100 bg-white" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="mx-auto flex max-w-md">
           {abas.map(({ para, rotulo, Icone, fim }) => (
             <NavLink key={para} to={para} end={fim}
@@ -505,7 +519,7 @@ function ClubeOferta() {
 function Inicio({ plano }) {
   const premium = plano !== 'padrao'
   return (
-    <div className="relative flex min-h-[calc(100vh-8.5rem)] flex-col justify-between py-2 text-center">
+    <div className="relative flex min-h-full flex-col justify-between py-2 text-center">
       <Link
         to="/perfil"
         aria-label="Minha conta"
@@ -1620,6 +1634,7 @@ export default function App() {
 
   return (
     <HashRouter>
+      <RolarParaTopo />
       <Routes>
         <Route element={<Moldura plano={plano} />}>
           <Route path="/" element={<Inicio usuario={usuario} feitos={feitos} plano={plano} />} />
