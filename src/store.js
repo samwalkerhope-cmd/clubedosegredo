@@ -12,6 +12,13 @@ const sb = DEMO ? null : createClient(url, key)
 // ---- idioma das mensagens (VITE_IDIOMA=es no site em espanhol) ----
 const ES = {
   'Informe o telefone com DDD.': 'Ingresa el teléfono con el código de país.',
+  'Informe seu telefone (com DDD) ou e-mail.': 'Ingresa tu teléfono (con código de país) o tu correo.',
+  'Informe um telefone ou e-mail.': 'Ingresa un teléfono o un correo.',
+  'Telefone/e-mail ou senha incorretos.': 'Teléfono/correo o contraseña incorrectos.',
+  'Este telefone ou e-mail já tem conta. Use "Entrar".': 'Este teléfono o correo ya tiene cuenta. Usa "Entrar".',
+  'Não encontramos uma compra com este telefone ou e-mail. Use o mesmo e-mail da compra.': 'No encontramos una compra con este teléfono o correo. Usa el mismo correo de la compra.',
+  'Não foi possível conectar. Tente de novo.': 'No se pudo conectar. Inténtalo de nuevo.',
+  'Não foi possível alterar o acesso.': 'No se pudo cambiar el acceso.',
   'Telefone ou senha incorretos.': 'Teléfono o contraseña incorrectos.',
   'Informe seu nome.': 'Ingresa tu nombre.',
   'A senha precisa ter pelo menos 6 caracteres.': 'La contraseña debe tener al menos 6 caracteres.',
@@ -59,8 +66,18 @@ const local = {
 }
 
 const soNumeros = (t) => String(t || '').replace(/\D/g, '')
-const emailDe = (telefone) => `${soNumeros(telefone)}@${dominio}`
-const usuarioDe = (u) => u && { id: u.id, nome: u.user_metadata?.nome || '', telefone: u.user_metadata?.telefone || '' }
+const ehEmail = (t) => String(t || '').includes('@')
+const EMAIL_OK = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+// Aceita telefone (8+ dígitos, com ou sem código do país) ou e-mail.
+const identValido = (t) => (ehEmail(t) ? EMAIL_OK.test(String(t).trim()) : soNumeros(t).length >= 8)
+const usuarioDe = (u) => u && { id: u.id, nome: u.user_metadata?.nome || '', telefone: u.user_metadata?.telefone || '', email: u.user_metadata?.email || '' }
+
+// O banco encontra o acesso pelo telefone ou e-mail e devolve o login interno da conta (veja login_de em supabase/schema.sql).
+async function emailDe(ident) {
+  const { data, error } = await sb.rpc('login_de', { p_ident: String(ident).trim() })
+  if (error || !data) throw new Error(msg('Não foi possível conectar. Tente de novo.'))
+  return `${data}@${dominio}`
+}
 
 // Preferências simples deste aparelho (ex.: itens marcados na lista de compras).
 export const guardado = local
@@ -93,14 +110,14 @@ export async function sessao() {
 }
 
 export async function entrar(telefone, senha) {
-  if (soNumeros(telefone).length < 10) throw new Error(msg('Informe o telefone com DDD.'))
+  if (!identValido(telefone)) throw new Error(msg('Informe seu telefone (com DDD) ou e-mail.'))
   if (DEMO) {
-    const u = local.get('clube.usuario', null) || { id: 'demo', nome: '', telefone: soNumeros(telefone) }
+    const u = local.get('clube.usuario', null) || { id: 'demo', nome: '', telefone: ehEmail(telefone) ? '' : soNumeros(telefone), email: ehEmail(telefone) ? telefone.trim() : '' }
     local.set('clube.usuario', u)
     return demoUsuario(u)
   }
-  const { data, error } = await sb.auth.signInWithPassword({ email: emailDe(telefone), password: senha })
-  if (error) throw new Error(msg('Telefone ou senha incorretos.'))
+  const { data, error } = await sb.auth.signInWithPassword({ email: await emailDe(telefone), password: senha })
+  if (error) throw new Error(msg('Telefone/e-mail ou senha incorretos.'))
   if (!(await temAcesso())) {
     await sb.auth.signOut()
     throw new Error(msg('Seu acesso foi encerrado. Fale com o suporte.'))
@@ -110,20 +127,20 @@ export async function entrar(telefone, senha) {
 
 export async function criarConta(nome, telefone, senha) {
   if (!nome.trim()) throw new Error(msg('Informe seu nome.'))
-  if (soNumeros(telefone).length < 10) throw new Error(msg('Informe o telefone com DDD.'))
+  if (!identValido(telefone)) throw new Error(msg('Informe seu telefone (com DDD) ou e-mail.'))
   if (DEMO) {
-    const u = { id: 'demo', nome: nome.trim(), telefone: soNumeros(telefone) }
+    const u = { id: 'demo', nome: nome.trim(), telefone: ehEmail(telefone) ? '' : soNumeros(telefone), email: ehEmail(telefone) ? telefone.trim() : '' }
     local.set('clube.usuario', u)
     return demoUsuario(u)
   }
   if (senha.length < 6) throw new Error(msg('A senha precisa ter pelo menos 6 caracteres.'))
   const { data, error } = await sb.auth.signUp({
-    email: emailDe(telefone),
+    email: await emailDe(telefone),
     password: senha,
-    options: { data: { nome: nome.trim(), telefone: soNumeros(telefone) } },
+    options: { data: { nome: nome.trim(), ...(ehEmail(telefone) ? { email: telefone.trim().toLowerCase() } : { telefone: soNumeros(telefone) }) } },
   })
-  // O banco só aceita telefones que estão na lista de acessos liberados (veja supabase/schema.sql).
-  if (error) throw new Error(msg(error.message.includes('registered') ? 'Este telefone já tem conta. Use "Entrar".' : 'Este telefone ainda não tem acesso liberado.'))
+  // O banco só aceita quem está na lista de acessos ativos (compra aprovada ou liberação manual).
+  if (error) throw new Error(msg(error.message.includes('registered') ? 'Este telefone ou e-mail já tem conta. Use "Entrar".' : 'Não encontramos uma compra com este telefone ou e-mail. Use o mesmo e-mail da compra.'))
   if (!data.session) throw new Error(msg('Conta criada, mas a confirmação por e-mail está ligada no Supabase. Desligue-a (veja o README).'))
   return comAdmin(usuarioDe(data.user)) // o perfil é criado pelo próprio banco
 }
@@ -238,22 +255,34 @@ export async function linkPresente(arquivo) {
 // ---- administração ----
 export async function acessos() {
   if (DEMO) return local.get('clube.acessos', [])
-  const { data, error } = await sb.from('acessos').select('telefone, nome, liberado_em').order('liberado_em', { ascending: false })
+  const { data, error } = await sb.from('acessos').select('id, telefone, email, nome, liberado_em, ativo, plano, origem, status').order('liberado_em', { ascending: false })
   if (error) throw new Error(msg('Não foi possível carregar os acessos.'))
   return data
 }
 
-export async function liberarAcesso(telefone, nome) {
-  const item = { telefone: soNumeros(telefone), nome: nome.trim(), liberado_em: new Date().toISOString() }
-  if (item.telefone.length < 10) throw new Error(msg('Informe o telefone com DDD.'))
-  if (DEMO) return local.set('clube.acessos', [item, ...local.get('clube.acessos', []).filter((a) => a.telefone !== item.telefone)])
-  const { error } = await sb.from('acessos').upsert(item)
+// Liberação manual pelo painel (as compras aprovadas entram sozinhas, pelo n8n).
+export async function liberarAcesso({ email = '', telefone = '', nome = '' }) {
+  email = email.trim(); telefone = soNumeros(telefone)
+  if (!email && !telefone) throw new Error(msg('Informe um telefone ou e-mail.'))
+  if ((email && !EMAIL_OK.test(email)) || (telefone && telefone.length < 8)) throw new Error(msg('Informe seu telefone (com DDD) ou e-mail.'))
+  if (DEMO) {
+    const item = { id: String(Date.now()), email, telefone, nome: nome.trim(), liberado_em: new Date().toISOString(), ativo: true, plano: 'padrao', origem: 'manual', status: 'manual' }
+    return local.set('clube.acessos', [item, ...local.get('clube.acessos', [])])
+  }
+  const { error } = await sb.rpc('admin_liberar', { p_email: email || null, p_telefone: telefone || null, p_nome: nome.trim() || null })
   if (error) throw new Error(msg('Não foi possível liberar o acesso.'))
 }
 
-export async function removerAcesso(telefone) {
-  if (DEMO) return local.set('clube.acessos', local.get('clube.acessos', []).filter((a) => a.telefone !== telefone))
-  const { error } = await sb.from('acessos').delete().eq('telefone', telefone)
+// Bloqueia ou reativa sem apagar (a conta continua existindo).
+export async function ativarAcesso(id, ativo) {
+  if (DEMO) return local.set('clube.acessos', local.get('clube.acessos', []).map((a) => (a.id === id ? { ...a, ativo } : a)))
+  const { error } = await sb.rpc('admin_ativar', { p_id: id, p_ativo: ativo })
+  if (error) throw new Error(msg('Não foi possível alterar o acesso.'))
+}
+
+export async function removerAcesso(id) {
+  if (DEMO) return local.set('clube.acessos', local.get('clube.acessos', []).filter((a) => a.id !== id))
+  const { error } = await sb.from('acessos').delete().eq('id', id)
   if (error) throw new Error(msg('Não foi possível remover o acesso.'))
 }
 
@@ -263,7 +292,7 @@ export async function membros() {
     return u ? [{ id: u.id, nome: u.nome, telefone: u.telefone, plano: 'clube', admin: true, dias: local.get('clube.progresso', []).length }] : []
   }
   const [perfis, prog] = await Promise.all([
-    sb.from('profiles').select('id, nome, telefone, criado_em, plano, admin').order('criado_em', { ascending: false }),
+    sb.from('profiles').select('id, nome, telefone, email, criado_em, plano, admin').order('criado_em', { ascending: false }),
     sb.from('progress').select('user_id'),
   ])
   if (perfis.error || prog.error) throw new Error(msg('Não foi possível carregar os membros.'))

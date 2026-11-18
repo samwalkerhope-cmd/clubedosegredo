@@ -179,6 +179,238 @@ grant execute on function public.tem_acesso() to authenticated;
 grant execute on function public.definir_plano(uuid, text) to authenticated;
 grant execute on function public.admin_redefinir_senha(uuid, text) to authenticated;
 
+-- ---------------------------------------------------------------- compras automáticas (checkout -> n8n -> Supabase), login por telefone OU e-mail
+-- Cada acesso tem um "login" próprio (o identificador interno da conta). A cliente digita telefone ou e-mail,
+-- a função login_de encontra o acesso e devolve esse login. Acessos antigos continuam com login = telefone.
+alter table public.acessos add column if not exists id uuid not null default gen_random_uuid();
+alter table public.acessos add column if not exists email text;
+alter table public.acessos add column if not exists login text;
+alter table public.acessos add column if not exists ativo boolean not null default true;
+alter table public.acessos add column if not exists plano text not null default 'padrao';
+alter table public.acessos add column if not exists origem text not null default 'manual';
+alter table public.acessos add column if not exists status text;
+alter table public.acessos add column if not exists pedido text;
+alter table public.acessos add column if not exists atualizado_em timestamptz not null default now();
+update public.acessos set login = telefone where login is null;
+do $$ begin
+  if exists (select 1 from pg_constraint where conname = 'acessos_pkey' and conrelid = 'public.acessos'::regclass
+             and pg_get_constraintdef(oid) like '%(telefone)%') then
+    alter table public.acessos drop constraint acessos_pkey;
+    alter table public.acessos add primary key (id);
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'acessos_plano_check') then
+    alter table public.acessos add constraint acessos_plano_check check (plano in ('padrao', 'clube'));
+  end if;
+end $$;
+alter table public.acessos alter column telefone drop not null;
+alter table public.acessos alter column login set default ('c' || replace(gen_random_uuid()::text, '-', ''));
+alter table public.acessos alter column login set not null;
+create unique index if not exists acessos_login on public.acessos (login);
+create unique index if not exists acessos_telefone on public.acessos (telefone) where telefone is not null;
+create unique index if not exists acessos_email on public.acessos (lower(email)) where email is not null;
+
+alter table public.profiles add column if not exists email text;
+
+-- Telefone só com números e sem zeros à esquerda.
+create or replace function public.normalizar_tel(t text) returns text
+language sql immutable set search_path = public as $$
+  select ltrim(regexp_replace(coalesce(t, ''), '\D', '', 'g'), '0')
+$$;
+
+-- Encontra o acesso pelo e-mail ou pelo telefone. No telefone, aceita o número com ou sem código do país
+-- (um termina com o outro, mínimo de 8 dígitos). Se houver mais de um candidato, não escolhe nenhum.
+create or replace function public.achar_acesso(p_ident text) returns public.acessos
+language plpgsql stable security definer set search_path = public as $$
+declare v text := trim(coalesce(p_ident, '')); d text; r public.acessos; n int;
+begin
+  if position('@' in v) > 0 then
+    select * into r from public.acessos where lower(email) = lower(v) limit 1;
+    return r;
+  end if;
+  d := public.normalizar_tel(v);
+  if length(d) < 8 then return r; end if;
+  select * into r from public.acessos where public.normalizar_tel(telefone) = d limit 1;
+  if found then return r; end if;
+  -- mesmo final: um termina com o outro, ou os últimos 10 dígitos batem (ex.: México com e sem o "1")
+  select count(*) into n from public.acessos a, lateral (select public.normalizar_tel(a.telefone) as t) x
+   where length(x.t) >= 8
+     and (x.t like '%' || d or d like '%' || x.t or (length(x.t) >= 10 and length(d) >= 10 and right(x.t, 10) = right(d, 10)));
+  if n = 1 then
+    select a.* into r from public.acessos a, lateral (select public.normalizar_tel(a.telefone) as t) x
+     where length(x.t) >= 8
+       and (x.t like '%' || d or d like '%' || x.t or (length(x.t) >= 10 and length(d) >= 10 and right(x.t, 10) = right(d, 10)));
+  end if;
+  return r;
+end $$;
+
+-- Usada na tela de login. Sem acesso encontrado, devolve um login que não existe (a mensagem de erro é a mesma).
+create or replace function public.login_de(p_ident text) returns text
+language plpgsql stable security definer set search_path = public as $$
+declare r public.acessos;
+begin
+  r := public.achar_acesso(p_ident);
+  if r.login is not null then return r.login; end if;
+  return 'x' || substr(md5(lower(trim(coalesce(p_ident, '')))), 1, 24);
+end $$;
+
+-- Só cria conta quem tem acesso ATIVO.
+create or replace function public.conferir_acesso() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if not exists (select 1 from public.acessos where login = split_part(new.email, '@', 1) and ativo) then
+    raise exception 'sem acesso liberado';
+  end if;
+  return new;
+end $$;
+
+-- O perfil nasce com os dados e o plano do acesso.
+create or replace function public.criar_perfil() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.profiles (id, nome, telefone, email, plano)
+  select new.id, coalesce(nullif(new.raw_user_meta_data->>'nome', ''), a.nome), a.telefone, a.email, a.plano
+    from public.acessos a where a.login = split_part(new.email, '@', 1)
+  on conflict (id) do nothing;
+  if not found then
+    insert into public.profiles (id, nome, telefone) values (new.id, new.raw_user_meta_data->>'nome', split_part(new.email, '@', 1))
+    on conflict (id) do nothing;
+  end if;
+  return new;
+end $$;
+
+create or replace function public.tem_acesso() returns boolean
+language sql stable security definer set search_path = public as $$
+  select public.eh_admin() or exists (
+    select 1 from auth.users u join public.acessos a on a.login = split_part(u.email, '@', 1)
+     where u.id = auth.uid() and a.ativo
+  )
+$$;
+
+-- Cria ou atualiza um acesso (por e-mail ou telefone). Parâmetros nulos não mudam o que já existe.
+create or replace function public.registrar_acesso(p_email text, p_telefone text, p_nome text, p_plano text, p_ativo boolean,
+                                                   p_origem text, p_status text, p_pedido text) returns public.acessos
+language plpgsql security definer set search_path = public as $$
+declare
+  r public.acessos;
+  e text := nullif(lower(trim(coalesce(p_email, ''))), '');
+  t text := nullif(public.normalizar_tel(p_telefone), '');
+begin
+  if t is not null and length(t) < 8 then t := null; end if;
+  if e is not null then select * into r from public.acessos where lower(email) = e limit 1; end if;
+  if r.id is null and t is not null then r := public.achar_acesso(t); end if;
+  if r.id is null then
+    if e is null and t is null then raise exception 'informe e-mail ou telefone'; end if;
+    insert into public.acessos (email, telefone, nome, plano, ativo, origem, status, pedido)
+    values (e, t, nullif(trim(coalesce(p_nome, '')), ''), coalesce(p_plano, 'padrao'), coalesce(p_ativo, true),
+            coalesce(p_origem, 'manual'), p_status, p_pedido)
+    returning * into r;
+  else
+    update public.acessos set
+      email = coalesce(email, case when e is not null and not exists (select 1 from public.acessos x where lower(x.email) = e and x.id <> r.id) then e end),
+      telefone = coalesce(telefone, case when t is not null and not exists (select 1 from public.acessos x where x.telefone = t and x.id <> r.id) then t end),
+      nome = coalesce(nome, nullif(trim(coalesce(p_nome, '')), '')),
+      plano = coalesce(p_plano, plano), ativo = coalesce(p_ativo, ativo),
+      status = coalesce(p_status, status), pedido = coalesce(p_pedido, pedido), atualizado_em = now()
+    where id = r.id returning * into r;
+  end if;
+  update public.profiles set plano = r.plano
+   where not admin and id in (select u.id from auth.users u where split_part(u.email, '@', 1) = r.login);
+  return r;
+end $$;
+
+-- Painel: liberar, bloquear/reativar e remover.
+create or replace function public.admin_liberar(p_email text, p_telefone text, p_nome text) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not public.eh_admin() then raise exception 'sem permissão'; end if;
+  perform public.registrar_acesso(p_email, p_telefone, p_nome, null, true, 'manual', 'manual', null);
+end $$;
+
+create or replace function public.admin_ativar(p_id uuid, p_ativo boolean) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not public.eh_admin() then raise exception 'sem permissão'; end if;
+  update public.acessos set ativo = p_ativo, status = case when p_ativo then 'reativado' else 'bloqueado' end, atualizado_em = now() where id = p_id;
+end $$;
+
+-- Ao mudar o plano no painel, o acesso guarda o mesmo plano.
+create or replace function public.definir_plano(p_id uuid, p_plano text) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not public.eh_admin() then raise exception 'sem permissão'; end if;
+  if p_plano not in ('padrao', 'clube') then raise exception 'plano inválido'; end if;
+  update public.profiles set plano = p_plano where id = p_id;
+  update public.acessos set plano = p_plano, atualizado_em = now()
+   where login = (select split_part(u.email, '@', 1) from auth.users u where u.id = p_id);
+end $$;
+
+-- Token secreto do webhook (gerado pelo próprio banco). Ninguém lê pela API.
+create table if not exists public.config_privada (chave text primary key, valor text not null);
+alter table public.config_privada enable row level security;
+revoke all on public.config_privada from anon, authenticated;
+insert into public.config_privada (chave, valor) values ('webhook_token', encode(extensions.gen_random_bytes(24), 'hex'))
+  on conflict (chave) do nothing;
+
+-- Registro de tudo que chegou do checkout (só admins leem).
+create table if not exists public.eventos_compra (
+  id bigserial primary key,
+  recebido_em timestamptz not null default now(),
+  evento text, email text, telefone text, pedido text, premium boolean, resultado text, dados jsonb
+);
+alter table public.eventos_compra enable row level security;
+revoke insert, update, delete on public.eventos_compra from anon, authenticated;
+drop policy if exists "eventos admin" on public.eventos_compra;
+create policy "eventos admin" on public.eventos_compra for select using (public.eh_admin());
+
+-- Chamado pelo n8n. O token vem no cabeçalho x-webhook-token (ou em p_token).
+-- aprovada: libera (p_premium = true também dá o Premium).
+-- reembolso / chargeback / recusada / cancelada: bloqueia; com p_premium = true só tira o Premium.
+create or replace function public.webhook_compra(p_evento text, p_email text default null, p_telefone text default null,
+                                                 p_nome text default null, p_premium boolean default false, p_pedido text default null,
+                                                 p_dados jsonb default null, p_token text default null) returns json
+language plpgsql security definer set search_path = public as $$
+declare
+  r public.acessos;
+  tok text := coalesce(p_token, nullif(current_setting('request.headers', true), '')::json->>'x-webhook-token');
+begin
+  if tok is null or tok is distinct from (select valor from public.config_privada where chave = 'webhook_token') then
+    raise exception 'token inválido' using errcode = '28000';
+  end if;
+  if p_evento = 'aprovada' then
+    r := public.registrar_acesso(p_email, p_telefone, p_nome, case when p_premium then 'clube' end, true, 'checkout', 'aprovada', p_pedido);
+  elsif p_evento in ('reembolso', 'chargeback', 'recusada', 'cancelada') then
+    if p_premium then
+      r := public.registrar_acesso(p_email, p_telefone, p_nome, 'padrao', null, 'checkout', p_evento || ' premium', p_pedido);
+    else
+      r := public.registrar_acesso(p_email, p_telefone, p_nome, null, false, 'checkout', p_evento, p_pedido);
+    end if;
+  else
+    raise exception 'evento desconhecido: %', p_evento;
+  end if;
+  insert into public.eventos_compra (evento, email, telefone, pedido, premium, resultado, dados)
+  values (p_evento, p_email, p_telefone, p_pedido, p_premium, case when r.ativo then 'ativo' else 'bloqueado' end || ' · ' || r.plano, p_dados);
+  return json_build_object('ok', true, 'ativo', r.ativo, 'plano', r.plano, 'novo', r.liberado_em > now() - interval '5 seconds');
+end $$;
+
+-- Permissões
+revoke execute on function public.achar_acesso(text) from public, anon, authenticated;
+revoke execute on function public.registrar_acesso(text, text, text, text, boolean, text, text, text) from public, anon, authenticated;
+revoke execute on function public.conferir_acesso() from public, anon, authenticated;
+revoke execute on function public.criar_perfil() from public, anon, authenticated;
+grant execute on function public.conferir_acesso() to supabase_auth_admin;
+grant execute on function public.criar_perfil() to supabase_auth_admin;
+revoke execute on function public.tem_acesso() from public, anon;
+revoke execute on function public.admin_liberar(text, text, text) from public, anon;
+revoke execute on function public.admin_ativar(uuid, boolean) from public, anon;
+revoke execute on function public.definir_plano(uuid, text) from public, anon;
+grant execute on function public.tem_acesso() to authenticated;
+grant execute on function public.admin_liberar(text, text, text) to authenticated;
+grant execute on function public.admin_ativar(uuid, boolean) to authenticated;
+grant execute on function public.definir_plano(uuid, text) to authenticated;
+grant execute on function public.login_de(text) to anon, authenticated;
+grant execute on function public.normalizar_tel(text) to anon, authenticated;
+grant execute on function public.webhook_compra(text, text, text, text, boolean, text, jsonb, text) to anon, authenticated;
+
 -- ---------------------------------------------------------------- primeira administradora
 -- 1) Libere o seu próprio telefone (troque pelo seu número, só dígitos, com DDD):
 --      insert into public.acessos (telefone, nome) values ('85999999999', 'Seu nome');

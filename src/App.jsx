@@ -58,7 +58,8 @@ function Entrada({ aoEntrar }) {
           {criando && (
             <input className="campo" placeholder="Seu nome" value={nome} onChange={(e) => setNome(e.target.value)} autoComplete="name" />
           )}
-          <input className="campo" type="tel" inputMode="numeric" placeholder="Telefone com DDD (só números)" value={telefone} onChange={(e) => setTelefone(e.target.value)} autoComplete="tel" />
+          <input className="campo" type="text" inputMode="email" placeholder="Telefone ou e-mail da compra" value={telefone} onChange={(e) => setTelefone(e.target.value)} autoComplete="username" autoCapitalize="off" spellCheck="false" />
+          {criando && <p className="-mt-2 text-xs text-azul-700">Use o mesmo e-mail ou telefone que você usou na compra.</p>}
           <input className="campo" type="password" placeholder="Sua senha" value={senha} onChange={(e) => setSenha(e.target.value)} autoComplete={criando ? 'new-password' : 'current-password'} />
           <Erro>{erro}</Erro>
           <button className="btn-azul w-full" disabled={enviando}>{enviando ? 'Aguarde…' : criando ? 'Criar conta' : 'Entrar'}</button>
@@ -70,7 +71,7 @@ function Entrada({ aoEntrar }) {
           </p>
           {!criando && APP.whatsapp && (
             <a className="block text-center text-sm font-medium text-azul-700 underline" target="_blank" rel="noreferrer"
-              href={`https://wa.me/${APP.whatsapp}?text=${encodeURIComponent('Olá! Esqueci minha senha do Clube. Meu telefone: ' + (telefone || ''))}`}>
+              href={`https://wa.me/${APP.whatsapp}?text=${encodeURIComponent('Olá! Esqueci minha senha do Clube. Meu telefone ou e-mail: ' + (telefone || ''))}`}>
               Esqueci minha senha
             </a>
           )}
@@ -1284,7 +1285,7 @@ function Perfil({ usuario, plano, aoMudarPlano, aoAtualizar, aoSair }) {
         <label className="block text-sm font-medium">Nome
           <input className="campo mt-1" value={nome} onChange={(e) => setNome(e.target.value)} />
         </label>
-        <p className="text-sm text-azul-700">Telefone: {usuario.telefone}</p>
+        {(usuario.telefone || usuario.email) && <p className="text-sm text-azul-700">{usuario.telefone ? `Telefone: ${usuario.telefone}` : `E-mail: ${usuario.email}`}</p>}
         <Erro>{erro}</Erro>
         {aviso && <p className="text-sm font-medium text-azul-700">{aviso}</p>}
         <button className="btn-azul w-full">Salvar</button>
@@ -1337,6 +1338,7 @@ function Admin({ usuario }) {
   const [lista, setLista] = useState([])
   const [pessoas, setPessoas] = useState([])
   const [telefone, setTelefone] = useState('')
+  const [email, setEmail] = useState('')
   const [nome, setNome] = useState('')
   const [erro, setErro] = useState('')
 
@@ -1357,12 +1359,17 @@ function Admin({ usuario }) {
   async function liberar(e) {
     e.preventDefault()
     setErro('')
-    try { await store.liberarAcesso(telefone, nome); setTelefone(''); setNome(''); await carregar() } catch (err) { setErro(err.message) }
+    try { await store.liberarAcesso({ email, telefone, nome }); setTelefone(''); setEmail(''); setNome(''); await carregar() } catch (err) { setErro(err.message) }
   }
 
-  async function remover(tel) {
+  async function remover(id) {
     setErro('')
-    try { await store.removerAcesso(tel); await carregar() } catch (err) { setErro(err.message) }
+    try { await store.removerAcesso(id); await carregar() } catch (err) { setErro(err.message) }
+  }
+
+  async function ativar(a) {
+    setErro('')
+    try { await store.ativarAcesso(a.id, a.ativo === false); await carregar() } catch (err) { setErro(err.message) }
   }
 
   async function alternarPlano(p) {
@@ -1376,7 +1383,7 @@ function Admin({ usuario }) {
   }
 
   const concluiram = pessoas.filter((p) => p.dias >= DIAS.length).length
-  const numeros = [['Acessos liberados', lista.length], ['Contas criadas', pessoas.length], ['Concluíram', concluiram]]
+  const numeros = [['Acessos ativos', lista.filter((a) => a.ativo !== false).length], ['Contas criadas', pessoas.length], ['Concluíram', concluiram]]
 
   return (
     <div className="space-y-5">
@@ -1397,7 +1404,8 @@ function Admin({ usuario }) {
 
       <form onSubmit={liberar} className="card space-y-3 p-5">
         <h2 className="font-semibold">Liberar acesso</h2>
-        <p className="text-sm text-azul-700">Só quem está nesta lista consegue criar conta com o telefone informado.</p>
+        <p className="text-sm text-azul-700">Só quem está nesta lista (ativo) consegue criar conta. As compras aprovadas entram aqui automaticamente.</p>
+        <input className="campo" type="email" placeholder="E-mail (opcional)" value={email} onChange={(e) => setEmail(e.target.value)} autoCapitalize="off" />
         <input className="campo" type="tel" inputMode="numeric" placeholder="Telefone com DDD (só números)" value={telefone} onChange={(e) => setTelefone(e.target.value)} />
         <input className="campo" placeholder="Nome (opcional)" value={nome} onChange={(e) => setNome(e.target.value)} />
         <Erro>{erro}</Erro>
@@ -1407,15 +1415,24 @@ function Admin({ usuario }) {
 
       <section>
         <h2 className="mb-2 text-sm font-semibold text-azul-700">Acessos liberados</h2>
-        {lista.length === 0 ? <p className="card p-5 text-sm text-azul-700">Nenhum telefone liberado ainda.</p> : (
+        {lista.length === 0 ? <p className="card p-5 text-sm text-azul-700">Nenhum acesso ainda.</p> : (
           <ul className="card divide-y divide-azul-100">
             {lista.map((a) => (
-              <li key={a.telefone} className="flex items-center gap-3 px-5 py-3 text-sm">
-                <div className="flex-1">
-                  <p className="font-semibold">{a.telefone}</p>
+              <li key={a.id || a.telefone} className="flex items-center gap-3 px-5 py-3 text-sm">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold">{a.email || a.telefone}</p>
+                  {a.email && a.telefone && <p className="text-azul-700">{a.telefone}</p>}
                   <p className="text-azul-700">{a.nome || 'Sem nome'} · {new Date(a.liberado_em).toLocaleDateString('pt-BR')}</p>
+                  <div className="mt-1 flex flex-wrap gap-1.5 text-[11px] font-semibold">
+                    <span className={`rounded-full px-2 py-0.5 ${a.ativo === false ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>{a.ativo === false ? 'Bloqueado' : 'Ativo'}{a.status && a.status !== 'manual' && a.status !== 'aprovada' ? ` · ${a.status}` : ''}</span>
+                    <span className="rounded-full bg-azul-100 px-2 py-0.5 text-azul-800">{a.origem === 'checkout' ? 'Compra' : 'Manual'}</span>
+                    {a.plano === 'clube' && <span className="rounded-full bg-ouro-100 px-2 py-0.5 text-ouro-700">Premium</span>}
+                  </div>
                 </div>
-                <button className="rounded-lg border border-azul-200 px-3 py-1.5 text-xs font-medium hover:bg-red-50 hover:text-red-700" onClick={() => remover(a.telefone)}>Remover</button>
+                <div className="flex flex-col gap-1.5">
+                  <button className="rounded-lg border border-azul-200 px-3 py-1.5 text-xs font-medium hover:bg-ouro-100" onClick={() => ativar(a)}>{a.ativo === false ? 'Reativar' : 'Bloquear'}</button>
+                  <button className="rounded-lg border border-azul-200 px-3 py-1.5 text-xs font-medium hover:bg-red-50 hover:text-red-700" onClick={() => remover(a.id)}>Remover</button>
+                </div>
               </li>
             ))}
           </ul>
@@ -1432,7 +1449,7 @@ function Admin({ usuario }) {
                   <p className="font-semibold">{p.nome || 'Sem nome'}</p>
                   <p className="text-azul-700">{p.dias} de {DIAS.length} dias</p>
                 </div>
-                <p className="text-azul-700">{p.telefone}</p>
+                <p className="text-azul-700">{[p.email, p.telefone].filter(Boolean).join(' · ')}</p>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${p.plano === 'clube' ? 'bg-ouro-100 text-ouro-700' : 'bg-azul-100 text-azul-800'}`}>
                     {p.plano === 'clube' ? 'Premium' : 'Padrão'}{p.admin ? ' · Admin' : ''}
