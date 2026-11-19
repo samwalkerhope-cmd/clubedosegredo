@@ -119,6 +119,67 @@ function tokenDoLink() {
   return m ? m[1] : null
 }
 
+function conviteDoLink() {
+  const m = (typeof window !== 'undefined' ? window.location.hash : '').match(/^#\/acceso\?t=([a-f0-9]{20,})/)
+  return m ? m[1] : null
+}
+
+// Link pessoal do e-mail de acesso (/#/acceso?t=...): a cliente só cria a senha e já entra.
+function NovaConta({ token, aoEntrar, aoSair }) {
+  const [convite, setConvite] = useState(undefined) // undefined = conferindo · { ok: false } = link usado ou vencido
+  const [nome, setNome] = useState('')
+  const [senha, setSenha] = useState('')
+  const [confirma, setConfirma] = useState('')
+  const [erro, setErro] = useState('')
+  const [enviando, setEnviando] = useState(false)
+
+  useEffect(() => { store.verConvite(token).then(setConvite).catch(() => setConvite({ ok: false })) }, [token])
+
+  async function salvar(e) {
+    e.preventDefault()
+    setErro('')
+    setEnviando(true)
+    try { aoEntrar(await store.entrarComConvite(token, convite, nome, senha, confirma)) } catch (err) { setErro(err.message); setEnviando(false) }
+  }
+
+  const primeiroNome = (convite?.nome || '').trim().split(/\s+/)[0]
+  return (
+    <div className="min-h-full bg-gradient-to-b from-azul-900 to-azul-950 px-5 py-10">
+      <div className="mx-auto max-w-md">
+        <div className="flex flex-col items-center text-center">
+          <Marca tamanho="h-20 w-20 text-3xl" />
+          <h1 className="mt-4 font-serif text-3xl font-bold tracking-wide text-white">{APP.nome}</h1>
+        </div>
+        {convite === undefined ? (
+          <p className="mt-10 text-center text-sm text-white/80">Preparando tu acceso…</p>
+        ) : !convite.ok ? (
+          <div className="card mt-8 space-y-4 p-6">
+            <h2 className="titulo text-2xl">Este enlace ya fue usado</h2>
+            <p className="text-sm leading-relaxed text-azul-800">Si ya creaste tu contraseña, entra con tu correo (o teléfono) y tu contraseña. Si la olvidaste, toca «Olvidé mi contraseña» en la pantalla de entrada.</p>
+            <button type="button" className="btn-azul w-full" onClick={aoSair}>Entrar</button>
+          </div>
+        ) : (
+          <form onSubmit={salvar} className="card mt-8 space-y-4 p-6">
+            <div>
+              <h2 className="titulo text-2xl">{primeiroNome ? `¡Hola, ${primeiroNome}!` : '¡Bienvenida!'}</h2>
+              <p className="mt-1.5 text-sm leading-relaxed text-azul-800">
+                {convite.tem_conta ? 'Crea una contraseña nueva para entrar.' : 'Tu acceso está listo. Solo crea tu contraseña para entrar.'}
+                {convite.email ? <> Tu correo de acceso es <b>{convite.email}</b>.</> : null}
+              </p>
+            </div>
+            {!convite.nome && <input className="campo" placeholder="Tu nombre" value={nome} onChange={(e) => setNome(e.target.value)} autoComplete="name" />}
+            <input className="campo" type="password" placeholder="Crea tu contraseña (mínimo 6 caracteres)" value={senha} onChange={(e) => setSenha(e.target.value)} autoComplete="new-password" />
+            <input className="campo" type="password" placeholder="Repite la contraseña" value={confirma} onChange={(e) => setConfirma(e.target.value)} autoComplete="new-password" />
+            <Erro>{erro}</Erro>
+            <button className="btn-azul w-full" disabled={enviando}>{enviando ? 'Espera…' : 'Crear contraseña y entrar'}</button>
+            <button type="button" className="block w-full text-center text-sm font-semibold text-ouro-700 underline" onClick={aoSair}>Ya tengo contraseña</button>
+          </form>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function NovaSenha({ token, aoTerminar }) {
   const [senha, setSenha] = useState('')
   const [confirma, setConfirma] = useState('')
@@ -611,16 +672,124 @@ function Assistente({ usuario }) {
   )
 }
 
-// ------------------------------------------------------------------ Oferta Club (/clube — VSL + Checkout)
-function ClubeOferta() {
+// ------------------------------------------------------------------ Oferta Club (/clube — VSL + compra em 1 clique)
+// A cobrança é feita no cartão que a cliente já usou na compra do plano, pela função "um-clique" (servidor).
+// Fases: carregando · simples (página como sempre, sem cobrar) · confirmar (falta provar o e-mail) · codigo ·
+//        elegivel (mostra o cartão e a autorização) · processando · confirmando (acompanha a cada 30 s) · sucesso · oculta
+const ERROS_CODIGO = {
+  incorreto: 'El código no coincide. Revísalo e inténtalo de nuevo.',
+  expirado: 'Este código expiró. Pide uno nuevo.',
+  bloqueado: 'Demasiados intentos. Pide un código nuevo.',
+  limite_codigo: 'Ya enviamos varios códigos. Espera unos minutos e inténtalo de nuevo.',
+  envio: 'No pudimos enviar el código ahora. Inténtalo en unos minutos.',
+}
+const NO_AHORA = 'No pudimos procesar ahora, intenta en unos minutos.'
+
+function ClubeOferta({ plano, aoComprar }) {
   const navegar = useNavigate()
   const c = OFERTAS.clube
   const [aviso, setAviso] = useState('')
+  const [fase, setFase] = useState(plano === 'clube' ? 'sucesso' : 'carregando')
+  const [cartao, setCartao] = useState(null) // só fica na tela; nada é guardado
+  const [emailCodigo, setEmailCodigo] = useState('')
+  const [codigo, setCodigo] = useState('')
+  const [ocupado, setOcupado] = useState(false)
+  const chaveUnica = useRef(null) // uma por compra: a mesma em toda nova tentativa
+  if (!chaveUnica.current) chaveUnica.current = crypto.randomUUID()
+  const vivo = useRef(true)
   const iconesBeneficios = [LifeBuoy, Stethoscope, LineChart]
 
-  function comprar() {
-    if (!c.checkoutUrl) return setAviso('El enlace de compra todavía no está disponible. Inténtalo de nuevo más tarde.')
-    window.open(c.checkoutUrl, '_blank', 'noopener,noreferrer')
+  // Lê a resposta de "consultar" e decide a fase. Nunca cobra.
+  function aplicarConsulta(r, { silencioso = false } = {}) {
+    if (!vivo.current) return
+    if (r.ok === true && r.elegivel === true && r.cartao) {
+      setCartao(r.cartao); setFase('elegivel')
+    } else if (r.ok === true && r.motivo === 'ja_comprou') {
+      setFase('sucesso'); aoComprar?.()
+    } else if (r.ok === true && r.motivo === 'em_verificacao') {
+      setFase('confirmando')
+    } else if (r.ok === true && r.motivo === 'confirmar_email') {
+      setEmailCodigo(r.email || ''); setFase((f) => (f === 'codigo' ? f : 'confirmar'))
+    } else if (!silencioso) {
+      setFase('simples') // qualquer outro motivo, 401 ou 503: a página fica como está, sem cobrar
+    }
+  }
+
+  useEffect(() => {
+    vivo.current = true
+    if (plano !== 'clube') store.umClique('consultar').then(aplicarConsulta)
+    return () => { vivo.current = false }
+  }, [])
+
+  // Enquanto a compra está sendo confirmada, acompanha com "consultar" a cada 30 s (nunca com "comprar").
+  useEffect(() => {
+    if (fase !== 'confirmando') return
+    const t = setInterval(() => store.umClique('consultar').then((r) => aplicarConsulta(r, { silencioso: true })), 30000)
+    return () => clearInterval(t)
+  }, [fase])
+
+  async function pedirCodigo() {
+    setAviso(''); setOcupado(true)
+    const r = await store.umClique('pedir_codigo')
+    if (!vivo.current) return
+    setOcupado(false)
+    if (r.ok === true && r.confirmado) return store.umClique('consultar').then(aplicarConsulta)
+    if (r.ok === true && r.enviado) { setEmailCodigo(r.email || emailCodigo); setCodigo(''); return setFase('codigo') }
+    setAviso(ERROS_CODIGO[r.erro] || ERROS_CODIGO.envio)
+  }
+
+  async function confirmarCodigo(e) {
+    e?.preventDefault()
+    if (codigo.length !== 6) return
+    setAviso(''); setOcupado(true)
+    const r = await store.umClique('confirmar_codigo', { codigo })
+    if (!vivo.current) return
+    if (r.ok === true && r.confirmado) {
+      const consulta = await store.umClique('consultar')
+      setOcupado(false)
+      return aplicarConsulta(consulta)
+    }
+    setOcupado(false)
+    setAviso(ERROS_CODIGO[r.erro] || ERROS_CODIGO.incorreto)
+  }
+
+  async function comprar() {
+    if (fase === 'confirmar') return pedirCodigo()
+    if (fase !== 'elegivel') return setAviso('El enlace de compra todavía no está disponible. Inténtalo de nuevo más tarde.')
+    setAviso(''); setFase('processando')
+    const r = await store.umClique('comprar', { chave_unica: chaveUnica.current })
+    if (!vivo.current) return
+    if (r.ok === true && r.status === 'aprovado') { setFase('sucesso'); return aoComprar?.() }
+    if (r.status === 'recusado') { setFase('elegivel'); return setAviso('Tu tarjeta fue rechazada. Intenta más tarde o escríbenos a soporte.') }
+    if (r.status === 'indefinido' || r.status === 'em_andamento' || r.motivo === 'em_verificacao') return setFase('confirmando')
+    if (r.status === 'nao_elegivel') {
+      if (r.motivo === 'ja_comprou') { setFase('sucesso'); return aoComprar?.() }
+      if (r.motivo === 'confirmar_email') return setFase('confirmar')
+      return setFase('oculta')
+    }
+    setFase('elegivel'); setAviso(NO_AHORA) // erro, kn_indisponivel, limite, teto_diario: só repete com um novo toque (mesma chave)
+  }
+
+  if (fase === 'sucesso') {
+    return (
+      <div className="space-y-6 pb-16">
+        <button className="flex items-center gap-1 text-sm font-medium text-azul-700" onClick={() => navegar(-1)}>
+          <ChevronLeft size={18} /> Volver
+        </button>
+        <div className="rounded-2xl bg-gradient-to-br from-azul-900 to-azul-950 p-7 text-center text-white shadow-card">
+          <div className="mx-auto grid h-16 w-16 place-items-center rounded-full border-2 border-ouro-500 bg-azul-900 text-ouro-300">
+            <Crown size={30} />
+          </div>
+          <h1 className="mt-4 font-serif text-2xl font-bold leading-tight">¡Listo! Ya eres parte del Club Secreto.</h1>
+          <p className="mx-auto mt-2 max-w-[280px] text-sm leading-relaxed text-white/80">Tu acceso Premium ya está activo.</p>
+        </div>
+        <div className="space-y-2.5">
+          <Link to="/asistente" className="btn-ouro w-full"><Stethoscope size={18} /> Habla con la Dra.</Link>
+          <Link to="/protocolos" className="btn-linha w-full"><LifeBuoy size={18} className="text-ouro-600" /> Protocolos</Link>
+          <Link to="/evolucao" className="btn-linha w-full"><LineChart size={18} className="text-ouro-600" /> Mi Evolución</Link>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -686,14 +855,60 @@ function ClubeOferta() {
         ))}
       </ul>
 
-      <button
-        type="button"
-        onClick={comprar}
-        className="flex w-full items-center justify-center gap-2.5 rounded-2xl border border-ouro-500 bg-gradient-to-r from-ouro-300 to-ouro-500 px-4 py-4 text-sm font-bold text-azul-950 shadow-card transition active:scale-[0.99]"
-      >
-        <MessageCircle size={20} className="shrink-0" />
-        <span>{c.botao}</span>
-      </button>
+      {fase === 'elegivel' && cartao && (
+        <div className="rounded-2xl border border-ouro-500/50 bg-white p-4 text-center shadow-card">
+          <p className="flex items-center justify-center gap-2 text-sm font-semibold text-azul-900">
+            <ShieldCheck size={18} className="shrink-0 text-ouro-600" /> Pago con tu tarjeta {cartao.bandeira} •••• {cartao.final}
+          </p>
+          <p className="mt-1.5 text-xs leading-relaxed text-azul-700">
+            Al tocar «{c.botao}» autorizas un cobro único de US$ 67 en esta tarjeta.
+          </p>
+        </div>
+      )}
+
+      {fase === 'codigo' && (
+        <form onSubmit={confirmarCodigo} className="card space-y-3 p-4 text-center">
+          <p className="text-sm font-semibold text-azul-900">Confirma que eres tú</p>
+          <p className="text-xs leading-relaxed text-azul-700">
+            Enviamos un código de 6 dígitos a <b>{emailCodigo || 'tu correo de compra'}</b>. Revisa también la carpeta de spam.
+          </p>
+          <input
+            className="campo text-center text-xl font-bold tracking-[0.4em]"
+            inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="••••••" aria-label="Código de 6 dígitos"
+            value={codigo} onChange={(e) => setCodigo(e.target.value.replace(/\D/g, '').slice(0, 6))}
+          />
+          <button type="submit" className="btn-ouro w-full" disabled={ocupado || codigo.length !== 6}>
+            {ocupado ? 'Verificando…' : 'Confirmar código'}
+          </button>
+          <button type="button" className="text-xs font-medium text-azul-700 underline" disabled={ocupado} onClick={pedirCodigo}>
+            Enviar un código nuevo
+          </button>
+        </form>
+      )}
+
+      {fase === 'confirmando' && (
+        <p role="status" className="rounded-2xl border border-ouro-500/50 bg-white px-4 py-4 text-center text-sm font-semibold text-azul-900 shadow-card">
+          Estamos confirmando tu compra…
+        </p>
+      )}
+
+      {fase === 'oculta' && (
+        <p className="rounded-xl bg-azul-100 px-4 py-3 text-center text-sm text-azul-800">
+          Esta oferta no está disponible para tu cuenta en este momento. Si necesitas ayuda, escríbenos a soporte.
+        </p>
+      )}
+
+      {['carregando', 'simples', 'confirmar', 'elegivel', 'processando'].includes(fase) && (
+        <button
+          type="button"
+          onClick={comprar}
+          disabled={fase === 'processando' || fase === 'carregando' || ocupado}
+          className="flex w-full items-center justify-center gap-2.5 rounded-2xl border border-ouro-500 bg-gradient-to-r from-ouro-300 to-ouro-500 px-4 py-4 text-sm font-bold text-azul-950 shadow-card transition active:scale-[0.99] disabled:opacity-70"
+        >
+          <MessageCircle size={20} className="shrink-0" />
+          <span>{fase === 'processando' ? 'Procesando…' : ocupado ? 'Enviando código…' : c.botao}</span>
+        </button>
+      )}
       {aviso && <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-center text-sm text-red-700">{aviso}</p>}
     </div>
   )
@@ -1808,6 +2023,7 @@ function SoPremium({ plano, children }) {
 export default function App() {
   const [usuario, setUsuario] = useState(undefined) // undefined = carregando
   const [tokenReset, setTokenReset] = useState(tokenDoLink)
+  const [tokenConvite, setTokenConvite] = useState(conviteDoLink)
   const [feitos, setFeitos] = useState([])
   // O plano real vem do banco (o admin libera no painel). Admins podem simular o outro plano no Perfil (modo de teste).
   const [planoTeste, setPlanoTeste] = useState(() => store.guardado.get('clube.plano.teste', null))
@@ -1819,6 +2035,11 @@ export default function App() {
   }
 
   useEffect(() => { store.sessao().then(setUsuario).catch(() => setUsuario(null)) }, [])
+  function limparConvite() {
+    try { window.history.replaceState(null, '', window.location.pathname + '#/') } catch { window.location.hash = '#/' }
+    setTokenConvite(null)
+  }
+  useEffect(() => { if (tokenConvite && usuario) limparConvite() }, [tokenConvite, usuario])
   useEffect(() => {
     if (usuario) store.progresso(usuario).then(setFeitos).catch(() => setFeitos([]))
     else setFeitos([])
@@ -1843,6 +2064,8 @@ export default function App() {
     }} />
   }
   if (usuario === undefined) return <div className="grid h-full place-items-center bg-azul-900"><Marca /></div>
+  // Link pessoal de acesso: sem sessão aberta, a cliente cria a senha; com sessão, entra direto (o efeito acima limpa o link).
+  if (tokenConvite && !usuario) return <NovaConta token={tokenConvite} aoEntrar={(u) => { limparConvite(); setUsuario(u) }} aoSair={limparConvite} />
   if (!usuario) return <Entrada aoEntrar={setUsuario} />
 
   return (
@@ -1860,7 +2083,7 @@ export default function App() {
           <Route path="/protocolos/:id" element={<SoPremium plano={plano}><Protocolo /></SoPremium>} />
           <Route path="/rituais" element={<Rituais />} />
           <Route path="/rituais/:id" element={<Ritual />} />
-          <Route path="/clube" element={<ClubeOferta />} />
+          <Route path="/clube" element={<ClubeOferta plano={plano} aoComprar={() => store.sessao().then((u) => u && setUsuario(u)).catch(() => {})} />} />
           <Route path="/asistente" element={<SoPremium plano={plano}><Assistente usuario={usuario} /></SoPremium>} />
           <Route path="/admin" element={<Admin usuario={usuario} />} />
           <Route path="/evolucao" element={<SoPremium plano={plano}><Evolucao usuario={usuario} total={DIAS.length} nomeApp={APP.nome} /></SoPremium>} />

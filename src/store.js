@@ -190,6 +190,87 @@ export async function enviarChat(texto) {
   return data
 }
 
+// ---- link pessoal de acesso (convite enviado no e-mail de acesso): a cliente só cria a senha ----
+export async function verConvite(token) {
+  if (DEMO) return { ok: true, nome: '', email: '', tem_conta: false }
+  const { data, error } = await sb.rpc('ver_convite', { p_token: token })
+  if (error) throw new Error(msg('Não foi possível conectar. Tente de novo.'))
+  return data || { ok: false }
+}
+
+export async function entrarComConvite(token, convite, nome, senha, confirma) {
+  const nomeFinal = (nome || convite.nome || '').trim()
+  if (!nomeFinal) throw new Error(msg('Informe seu nome.'))
+  if (!senha || senha.length < 6) throw new Error(msg('A senha precisa ter pelo menos 6 caracteres.'))
+  if (senha !== confirma) throw new Error(msg('As senhas não conferem.'))
+  if (DEMO) {
+    const u = { id: 'demo', nome: nomeFinal, telefone: '', email: convite.email || '' }
+    local.set('clube.usuario', u)
+    return demoUsuario(u)
+  }
+  const email = `${convite.login}@${dominio}`
+  const expirou = () => new Error(msg('Este link expirou ou já foi usado. Peça um novo.'))
+  let temConta = !!convite.tem_conta
+  if (!temConta) {
+    const { data, error } = await sb.auth.signUp({ email, password: senha, options: { data: { nome: nomeFinal, email: (convite.email || '').toLowerCase(), convite: token } } })
+    if (!error && data.session) return comAdmin(usuarioDe(data.user))
+    if (error && !error.message.includes('registered')) throw expirou()
+    if (!error) throw new Error(msg('Conta criada, mas a confirmação por e-mail está ligada no Supabase. Desligue-a (veja o README).'))
+    temConta = true // a conta já existia: segue pela troca de senha
+  }
+  const { error: erroSenha } = await sb.rpc('senha_com_convite', { p_token: token, p_senha: senha })
+  if (erroSenha) throw expirou()
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: senha })
+  if (error) throw expirou()
+  return comAdmin(usuarioDe(data.user))
+}
+
+// ---- compra do Club Secreto em 1 clique ----
+// O app fala só com a função "um-clique" do Supabase (servidor). É ela que guarda a chave e conversa com o serviço de cobrança.
+// Daqui só saem "acao", "chave_unica" e "codigo": o e-mail, o preço e o produto são definidos no servidor.
+// Devolve o JSON da resposta com o código HTTP em "http". Decida sempre pelo JSON (ok, elegivel, motivo, status).
+export async function umClique(acao, extra = {}) {
+  const corpo = { acao }
+  if (extra.chave_unica) corpo.chave_unica = extra.chave_unica
+  if (extra.codigo) corpo.codigo = extra.codigo
+  if (DEMO) return demoUmClique(corpo)
+  try {
+    const { data } = await sb.auth.getSession()
+    const resp = await fetch(`${url}/functions/v1/um-clique`, {
+      method: 'POST',
+      cache: 'no-store',
+      headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${data.session?.access_token || ''}` },
+      body: JSON.stringify(corpo),
+    })
+    let json = {}
+    try { json = await resp.json() } catch { /* sem corpo */ }
+    return { ...json, http: resp.status }
+  } catch {
+    // Sem resposta numa cobrança: não sabemos se cobrou. A tela acompanha com "consultar".
+    return acao === 'comprar' ? { ok: true, status: 'indefinido', http: 0 } : { ok: false, status: 'erro', http: 0 }
+  }
+}
+
+// Modo demonstração: nada é cobrado. Código de teste 123456. Um teste pode trocar as respostas com window.__umCliqueDemo.
+const demoUC = { confirmado: false, comprou: false }
+async function demoUmClique(corpo) {
+  await new Promise((r) => setTimeout(r, 400))
+  if (typeof window !== 'undefined' && typeof window.__umCliqueDemo === 'function') return window.__umCliqueDemo(corpo)
+  if (corpo.acao === 'pedir_codigo') return { ok: true, enviado: true, email: 'tu•••@correo.com', http: 200 }
+  if (corpo.acao === 'confirmar_codigo') {
+    if (corpo.codigo !== '123456') return { ok: false, erro: 'incorreto', http: 400 }
+    demoUC.confirmado = true
+    return { ok: true, confirmado: true, http: 200 }
+  }
+  if (corpo.acao === 'consultar') {
+    if (demoUC.comprou) return { ok: true, elegivel: false, motivo: 'ja_comprou', http: 200 }
+    if (!demoUC.confirmado) return { ok: true, elegivel: false, motivo: 'confirmar_email', email: 'tu•••@correo.com', http: 200 }
+    return { ok: true, elegivel: true, oferta: { id: 'club', nome: 'Club Secreto', preco: '67.00', moeda: 'USD' }, cartao: { bandeira: 'VISA', final: '1234' }, http: 200 }
+  }
+  demoUC.comprou = true
+  return { ok: true, status: 'aprovado', pedido: 'DEMO', valor: '67.00', http: 200 }
+}
+
 // ---- recuperação de senha (link por e-mail, enviado pelo n8n + Mautic) ----
 // A resposta é sempre a mesma, exista ou não a conta (não revela quem é cliente).
 export async function pedirReset(url, ident) {
