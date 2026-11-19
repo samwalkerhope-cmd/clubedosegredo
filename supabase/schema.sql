@@ -800,3 +800,18 @@ revoke execute on function public.ver_convite(text) from public;
 revoke execute on function public.senha_com_convite(text, text) from public;
 grant execute on function public.ver_convite(text) to anon, authenticated;
 grant execute on function public.senha_com_convite(text, text) to anon, authenticated;
+
+-- Painel Admin: dar ou tirar o Premium direto na lista de acessos (vale também para a conta já criada).
+create or replace function public.admin_plano_acesso(p_id uuid, p_plano text) returns void
+language plpgsql security definer set search_path = public as $$
+declare a public.acessos;
+begin
+  if not public.eh_admin() then raise exception 'sem permissão'; end if;
+  if p_plano not in ('padrao', 'clube') then raise exception 'plano inválido'; end if;
+  update public.acessos set plano = p_plano, atualizado_em = now() where id = p_id returning * into a;
+  if a.id is null then raise exception 'acesso não encontrado'; end if;
+  update public.profiles set plano = p_plano
+   where not admin and id in (select u.id from auth.users u where split_part(u.email, '@', 1) = a.login);
+end $$;
+revoke execute on function public.admin_plano_acesso(uuid, text) from public, anon;
+grant execute on function public.admin_plano_acesso(uuid, text) to authenticated;

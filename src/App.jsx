@@ -1487,6 +1487,11 @@ function Admin({ usuario }) {
     try { await store.removerAcesso(id); await carregar() } catch (err) { setErro(err.message) }
   }
 
+  async function mudarPlanoAcesso(a) {
+    setErro('')
+    try { await store.planoAcesso(a.id, a.plano === 'clube' ? 'padrao' : 'clube'); setAviso('Plano atualizado.'); await carregar() } catch (err) { setErro(err.message) }
+  }
+
   async function ativar(a) {
     setErro('')
     try { await store.ativarAcesso(a.id, a.ativo === false); await carregar() } catch (err) { setErro(err.message) }
@@ -1550,6 +1555,7 @@ function Admin({ usuario }) {
                   </div>
                 </div>
                 <div className="flex flex-col gap-1.5">
+                  <button className="rounded-lg border border-ouro-500/60 px-3 py-1.5 text-xs font-medium text-ouro-700 hover:bg-ouro-100" onClick={() => mudarPlanoAcesso(a)}>{a.plano === 'clube' ? 'Tirar Premium' : 'Dar Premium'}</button>
                   <button className="rounded-lg border border-azul-200 px-3 py-1.5 text-xs font-medium hover:bg-ouro-100" onClick={() => ativar(a)}>{a.ativo === false ? 'Reativar' : 'Bloquear'}</button>
                   <button className="rounded-lg border border-azul-200 px-3 py-1.5 text-xs font-medium hover:bg-red-50 hover:text-red-700" onClick={() => remover(a.id)}>Remover</button>
                 </div>

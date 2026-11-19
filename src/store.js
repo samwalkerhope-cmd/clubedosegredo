@@ -418,6 +418,13 @@ export async function liberarAcesso({ email = '', telefone = '', nome = '' }) {
 }
 
 // Bloqueia ou reativa sem apagar (a conta continua existindo).
+// Dá ou tira o Premium de um acesso (vale também para a conta já criada com ele).
+export async function planoAcesso(id, plano) {
+  if (DEMO) return local.set('clube.acessos', local.get('clube.acessos', []).map((a) => (a.id === id ? { ...a, plano } : a)))
+  const { error } = await sb.rpc('admin_plano_acesso', { p_id: id, p_plano: plano })
+  if (error) throw new Error(msg('Não foi possível alterar o plano.'))
+}
+
 export async function ativarAcesso(id, ativo) {
   if (DEMO) return local.set('clube.acessos', local.get('clube.acessos', []).map((a) => (a.id === id ? { ...a, ativo } : a)))
   const { error } = await sb.rpc('admin_ativar', { p_id: id, p_ativo: ativo })
