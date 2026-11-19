@@ -1808,7 +1808,8 @@ function Perfil({ usuario, plano, aoMudarPlano, aoAtualizar, aoSair }) {
         <label className="block text-sm font-medium">Nombre
           <input className="campo mt-1" value={nome} onChange={(e) => setNome(e.target.value)} />
         </label>
-        {(usuario.telefone || usuario.email) && <p className="text-sm text-azul-700">{usuario.telefone ? `Teléfono: ${usuario.telefone}` : `Correo: ${usuario.email}`}</p>}
+        {usuario.email && <p className="break-all text-sm text-azul-700">Correo: {usuario.email}</p>}
+        {usuario.telefone && <p className="text-sm text-azul-700">Teléfono: {usuario.telefone}</p>}
         <Erro>{erro}</Erro>
         {aviso && <p className="text-sm font-medium text-azul-700">{aviso}</p>}
         <button className="btn-azul w-full">Guardar</button>

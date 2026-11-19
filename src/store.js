@@ -77,7 +77,9 @@ const ehEmail = (t) => String(t || '').includes('@')
 const EMAIL_OK = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 // Aceita telefone (8+ dígitos, com ou sem código do país) ou e-mail.
 const identValido = (t) => (ehEmail(t) ? EMAIL_OK.test(String(t).trim()) : soNumeros(t).length >= 8)
-const usuarioDe = (u) => u && { id: u.id, nome: u.user_metadata?.nome || '', telefone: u.user_metadata?.telefone || '', email: u.user_metadata?.email || '' }
+// O login interno da conta (xxxx@dominio) não é o e-mail da cliente: nunca aparece na tela.
+const emailReal = (e) => (e && !String(e).toLowerCase().endsWith('@' + dominio.toLowerCase()) ? e : '')
+const usuarioDe = (u) => u && { id: u.id, nome: u.user_metadata?.nome || '', telefone: u.user_metadata?.telefone || '', email: emailReal(u.user_metadata?.email) }
 
 // O banco encontra o acesso pelo telefone ou e-mail e devolve o login interno da conta (veja login_de em supabase/schema.sql).
 async function emailDe(ident) {
@@ -91,9 +93,10 @@ export const guardado = local
 
 async function comAdmin(u) {
   if (!u) return null
-  const { data } = await sb.from('profiles').select('admin, plano').eq('id', u.id).maybeSingle()
+  const { data } = await sb.from('profiles').select('admin, plano, email, telefone').eq('id', u.id).maybeSingle()
   // plano: 'clube' (Premium) ou 'padrao'. Quem define é o admin, no painel.
-  return { ...u, admin: !!data?.admin, plano: data?.plano || 'padrao' }
+  // E-mail e telefone mostrados no perfil são os da compra (guardados no banco).
+  return { ...u, email: emailReal(data?.email) || u.email, telefone: data?.telefone || u.telefone, admin: !!data?.admin, plano: data?.plano || 'padrao' }
 }
 const demoUsuario = (u) => u && { ...u, admin: true, plano: 'clube' } // no modo demonstração o painel fica visível
 
