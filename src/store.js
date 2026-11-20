@@ -193,6 +193,28 @@ export async function enviarChat(texto) {
   return data
 }
 
+// ---- funil do quiz (painel do Admin): retenção por tela, vinda de quiz_funil no Supabase ----
+export async function funilQuiz(de, ate, chave = null, valor = null) {
+  if (DEMO) return demoFunil(chave, valor)
+  const { data, error } = await sb.rpc('quiz_funil', { p_de: de, p_ate: ate, p_chave: chave, p_valor: valor })
+  if (error) throw new Error(msg('Não foi possível conectar. Tente de novo.'))
+  return data
+}
+// Modo demonstração: números inventados, só para ver o painel.
+function demoFunil(chave, valor) {
+  const telas = ['home', 'age', 'body', 'areas', 'alone', 'news', 'name', 'email', 'motivation', 'attempts', 'biology', 'barriers', 'comparison', 'goals', 'bloating', 'mechanism', 'weight', 'height', 'target', 'routine', 'sleep', 'projection', 'commitment', 'firstResult', 'analysis', 'report', 'testimonials', 'generating', 'sales', 'preco', 'cta']
+  const fator = [1, 0.62, 0.58, 0.56, 0.55, 0.54, 0.51, 0.5, 0.39, 0.38, 0.375, 0.37, 0.365, 0.36, 0.355, 0.35, 0.33, 0.325, 0.32, 0.315, 0.31, 0.305, 0.3, 0.295, 0.29, 0.285, 0.27, 0.265, 0.26, 0.21, 0.075]
+  const total = valor ? 640 : 2480
+  const passos = telas.map((passo, i) => ({ passo, n: Math.round(total * fator[i]), mediana: i === 0 ? 0 : Math.round(4 + i * 6.2) }))
+  const origem = (k, v, s, a, b, c) => ({ chave: k, valor: v, sessoes: s, inicio: Math.round(s * a), oferta: Math.round(s * b), cta: Math.round(s * c) })
+  return {
+    sessoes: total, celular: Math.round(total * 0.91), passos,
+    dias: [['2026-11-13', 310], ['2026-11-14', 355], ['2026-11-15', 402], ['2026-11-16', 338], ['2026-11-17', 365], ['2026-11-18', 371], ['2026-11-19', 339]].map(([dia, s]) => ({ dia, sessoes: s, inicio: Math.round(s * 0.62), oferta: Math.round(s * 0.26), cta: Math.round(s * 0.075) })),
+    origens: [origem('utm_campaign', '01_FB_SECRETO_ABO', 1210, 0.66, 0.29, 0.09), origem('utm_campaign', '02_FB_SECRETO_CBO', 640, 0.6, 0.25, 0.07), origem('utm_campaign', '03_TT_SECRETO', 520, 0.55, 0.2, 0.05), origem('utm_campaign', '(sem valor)', 110, 0.58, 0.24, 0.06),
+      origem('utm_source', 'facebook', 1850, 0.64, 0.28, 0.08), origem('utm_source', 'tiktok', 520, 0.55, 0.2, 0.05), origem('utm_source', '(sem valor)', 110, 0.58, 0.24, 0.06)],
+  }
+}
+
 // ---- link pessoal de acesso (convite enviado no e-mail de acesso): a cliente só cria a senha ----
 export async function verConvite(token) {
   if (DEMO) return { ok: true, nome: '', email: '', tem_conta: false }

@@ -4,6 +4,7 @@ import { Send, Crown, Map, Gift, LineChart, User, Check, ChevronLeft, ChevronRig
 import { APP, OFERTAS, DIAS, SEMANAS, SEGREDOS, PRESENTES, LISTA_COMPRAS, RECEITAS, CATEGORIAS, RITUAIS, PROTOCOLOS, RECEITA_DO_DIA } from './content.es'
 import * as store from './store'
 import Evolucao from './Evolucao'
+import FunilQuiz from './FunilQuiz'
 
 const iniciais = APP.nome.split(/\s+/).filter((p) => p.length > 2).slice(0, 2).map((p) => p[0].toUpperCase()).join('') || 'C'
 
@@ -1931,6 +1932,8 @@ function Admin({ usuario }) {
         ))}
       </div>
 
+      <Link to="/admin/funil" className="btn-linha w-full"><LineChart size={18} className="text-ouro-600" /> Funil do quiz (retenção por tela)</Link>
+
       <form onSubmit={liberar} className="card space-y-3 p-5">
         <h2 className="font-semibold">Habilitar acceso</h2>
         <p className="text-sm text-azul-700">Solo quien está en esta lista (activa) puede crear una cuenta. Las compras aprobadas entran aquí automáticamente.</p>
@@ -2093,6 +2096,7 @@ export default function App() {
           <Route path="/clube" element={<ClubeOferta plano={plano} aoComprar={() => store.sessao().then((u) => u && setUsuario(u)).catch(() => {})} />} />
           <Route path="/asistente" element={<SoPremium plano={plano}><Assistente usuario={usuario} /></SoPremium>} />
           <Route path="/admin" element={<Admin usuario={usuario} />} />
+          <Route path="/admin/funil" element={usuario.admin ? <FunilQuiz usuario={usuario} /> : <Navigate to="/" replace />} />
           <Route path="/evolucao" element={<SoPremium plano={plano}><Evolucao usuario={usuario} total={DIAS.length} nomeApp={APP.nome} /></SoPremium>} />
           <Route path="/presentes" element={<Presentes />} />
           <Route path="/perfil" element={<Perfil usuario={usuario} plano={plano} aoMudarPlano={mudarPlano} aoAtualizar={setUsuario} aoSair={sair} />} />
