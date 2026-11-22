@@ -14,6 +14,7 @@ const TELAS = {
   report: 'Análise pronta', testimonials: 'Depoimentos', generating: 'Gerando o plano…', sales: 'OFERTA (pitch)', preco: 'Viu o preço', cta: 'Clicou em "Quiero empezar"',
 }
 const NOMES_CHAVE = {
+  v: 'Versão da 1ª tela (v)',
   utm_campaign: 'Campanha (utm_campaign)', utm_content: 'Anúncio (utm_content)', utm_source: 'Fonte (utm_source)', utm_medium: 'Mídia (utm_medium)',
   utm_term: 'Posicionamento (utm_term)', sub1: 'sub1', sub2: 'sub2', sub3: 'sub3', sub4: 'sub4', sub5: 'sub5', sub6: 'sub6', sub7: 'sub7', sub8: 'sub8',
 }

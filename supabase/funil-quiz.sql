@@ -1,4 +1,4 @@
--- Funil do quiz: rode no SQL Editor do Supabase (projeto Club del Secreto). Já aplicado em 19/11/2026.
+-- Funil do quiz: rode no SQL Editor do Supabase (projeto Club del Secreto). Já aplicado (19/11 e ajuste da versão em 22/11/2026).
 
 -- ---------------------------------------------------------------- funil do quiz (retenção por tela, como a retenção de uma VSL)
 -- O quiz (ritualmetabolico.com) chama quiz_passo a cada tela. Fica UMA linha por visita, com a tela mais avançada e o
@@ -16,6 +16,7 @@ create index if not exists quiz_sessoes_inicio on public.quiz_sessoes (inicio);
 alter table public.quiz_sessoes enable row level security;
 revoke all on public.quiz_sessoes from anon, authenticated;
 
+-- Em "origem" também fica "v": a versão da 1ª tela (a, b, c ou d) do teste de abertura.
 -- Telas do quiz, na ordem. "email" = tela do e-mail; "preco" = viu o preço na oferta; "cta" = tocou em QUIERO EMPEZAR.
 create or replace function public.quiz_ordem() returns text[]
 language sql immutable as $$
@@ -32,7 +33,7 @@ begin
   if p_origem is not null and jsonb_typeof(p_origem) = 'object' then
     select coalesce(jsonb_object_agg(k, left(v, 150)), '{}'::jsonb) into o
       from jsonb_each_text(p_origem) as t(k, v)
-     where k in ('utm_source','utm_medium','utm_campaign','utm_content','utm_term','sub1','sub2','sub3','sub4','sub5','sub6','sub7','sub8','clickid')
+     where k in ('utm_source','utm_medium','utm_campaign','utm_content','utm_term','sub1','sub2','sub3','sub4','sub5','sub6','sub7','sub8','clickid','v')
        and v is not null and v <> '';
   end if;
   insert into public.quiz_sessoes as s (id, max_ordem, passos, origem, dispositivo)
@@ -73,7 +74,7 @@ begin
     select k, coalesce(base.origem->>k, '(sem valor)') as v, count(*) as sessoes,
            count(*) filter (where passos ? 'age') as inicio_quiz, count(*) filter (where passos ? 'sales') as oferta,
            count(*) filter (where passos ? 'cta') as cta
-      from base, unnest(array['utm_campaign','utm_content','utm_source','utm_medium','utm_term','sub1','sub2','sub3','sub4','sub5','sub6','sub7','sub8']) as k
+      from base, unnest(array['utm_campaign','utm_content','utm_source','utm_medium','utm_term','sub1','sub2','sub3','sub4','sub5','sub6','sub7','sub8','v']) as k
      where exists (select 1 from base b where b.origem ? k)
      group by 1, 2
   ), top as (

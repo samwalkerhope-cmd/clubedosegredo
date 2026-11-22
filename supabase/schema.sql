@@ -848,7 +848,7 @@ begin
   if p_origem is not null and jsonb_typeof(p_origem) = 'object' then
     select coalesce(jsonb_object_agg(k, left(v, 150)), '{}'::jsonb) into o
       from jsonb_each_text(p_origem) as t(k, v)
-     where k in ('utm_source','utm_medium','utm_campaign','utm_content','utm_term','sub1','sub2','sub3','sub4','sub5','sub6','sub7','sub8','clickid')
+     where k in ('utm_source','utm_medium','utm_campaign','utm_content','utm_term','sub1','sub2','sub3','sub4','sub5','sub6','sub7','sub8','clickid','v')
        and v is not null and v <> '';
   end if;
   insert into public.quiz_sessoes as s (id, max_ordem, passos, origem, dispositivo)
@@ -889,7 +889,7 @@ begin
     select k, coalesce(base.origem->>k, '(sem valor)') as v, count(*) as sessoes,
            count(*) filter (where passos ? 'age') as inicio_quiz, count(*) filter (where passos ? 'sales') as oferta,
            count(*) filter (where passos ? 'cta') as cta
-      from base, unnest(array['utm_campaign','utm_content','utm_source','utm_medium','utm_term','sub1','sub2','sub3','sub4','sub5','sub6','sub7','sub8']) as k
+      from base, unnest(array['utm_campaign','utm_content','utm_source','utm_medium','utm_term','sub1','sub2','sub3','sub4','sub5','sub6','sub7','sub8','v']) as k
      where exists (select 1 from base b where b.origem ? k)
      group by 1, 2
   ), top as (
