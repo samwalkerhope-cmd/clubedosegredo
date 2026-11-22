@@ -25,6 +25,65 @@ const fmtPct = (v) => (v >= 10 || v === 0 ? v.toFixed(0) : v.toFixed(1)).replace
 const fmtSeg = (s) => (s == null ? '—' : s < 60 ? `${Math.round(s)} s` : `${Math.floor(s / 60)} min ${String(Math.round(s % 60)).padStart(2, '0')} s`)
 const brData = (iso) => iso.slice(8, 10) + '/' + iso.slice(5, 7)
 
+const VERSOES = [
+  ['a', 'A · atual', 'Ozempic por la mezcla de $5'],
+  ['b', 'B · mecanismo', '¿Por qué después de los 40…? Tu insulina'],
+  ['c', 'C · idade na abertura', 'Elige tu edad para ver tu plan'],
+  ['d', 'D · rotina simples', 'Rutina de 21 días con ingredientes de tu cocina'],
+]
+
+// Quanto do tráfego vai para cada versão da 1ª tela do quiz. Os números são pesos: o quiz sorteia na proporção deles.
+function Distribuicao() {
+  const [pesos, setPesos] = useState(null)
+  const [salvo, setSalvo] = useState(null)
+  const [erro, setErro] = useState('')
+  const [aviso, setAviso] = useState('')
+  const [salvando, setSalvando] = useState(false)
+  useEffect(() => { store.versoesQuiz().then((v) => { setPesos(v); setSalvo(v) }).catch((e) => setErro(e.message)) }, [])
+  if (!pesos) return erro ? <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p> : null
+  const total = VERSOES.reduce((t, [k]) => t + (Number(pesos[k]) || 0), 0)
+  const mudou = JSON.stringify(VERSOES.map(([k]) => Number(pesos[k]) || 0)) !== JSON.stringify(VERSOES.map(([k]) => Number(salvo?.[k]) || 0))
+  const definir = (novo) => { setAviso(''); setErro(''); setPesos(novo) }
+  async function salvar() {
+    setErro(''); setAviso(''); setSalvando(true)
+    try { const v = await store.salvarVersoesQuiz(Object.fromEntries(VERSOES.map(([k]) => [k, Number(pesos[k]) || 0]))); setPesos(v); setSalvo(v); setAviso('Distribuição salva. Vale para as próximas visitas.') }
+    catch (e) { setErro(e.message) } finally { setSalvando(false) }
+  }
+  return (
+    <section className="card space-y-3 p-4">
+      <div>
+        <h2 className="text-sm font-bold text-azul-900">Distribuição da 1ª tela</h2>
+        <p className="mt-0.5 text-[11px] leading-relaxed text-azul-700">Quanto do tráfego vai para cada versão. Use 0 para desligar uma versão.</p>
+      </div>
+      <div className="space-y-2">
+        {VERSOES.map(([k, nome, texto]) => {
+          const n = Number(pesos[k]) || 0
+          return (
+            <div key={k} className="flex items-center gap-2.5">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-semibold text-azul-900">{nome}</p>
+                <p className="truncate text-[11px] text-azul-700">{texto}</p>
+              </div>
+              <span className="w-10 shrink-0 text-right text-xs font-bold tabular-nums text-azul-900">{total > 0 ? fmtPct(pct(n, total)) : '—'}</span>
+              <input type="number" min="0" max="100" inputMode="numeric" aria-label={`Peso da versão ${k.toUpperCase()}`} className="campo !w-16 !px-2 !py-1.5 text-center text-xs" value={pesos[k] ?? 0}
+                onChange={(e) => definir({ ...pesos, [k]: Math.max(0, Math.min(100, parseInt(e.target.value, 10) || 0)) })} />
+              <button type="button" className="shrink-0 rounded-lg border border-azul-200 px-2 py-1.5 text-[11px] font-medium text-azul-900 hover:bg-ouro-100" onClick={() => definir(Object.fromEntries(VERSOES.map(([x]) => [x, x === k ? 100 : 0])))}>Só esta</button>
+            </div>
+          )
+        })}
+      </div>
+      <div className="flex gap-2">
+        <button type="button" className="btn-linha flex-1 !py-2 text-xs" onClick={() => definir({ a: 25, b: 25, c: 25, d: 25 })}>Dividir igual</button>
+        <button type="button" className="btn-azul flex-1 !py-2 text-xs" disabled={!mudou || salvando || total <= 0} onClick={salvar}>{salvando ? 'Salvando…' : 'Salvar'}</button>
+      </div>
+      {total <= 0 && <p className="text-[11px] font-medium text-red-700">Pelo menos uma versão precisa ficar ligada.</p>}
+      {erro && <p role="alert" className="text-[11px] font-medium text-red-700">{erro}</p>}
+      {aviso && <p className="text-[11px] font-medium text-green-700">{aviso}</p>}
+      <p className="text-[11px] leading-relaxed text-azul-700">Quem já viu uma versão continua nela enquanto ela estiver ligada; se for desligada, a pessoa recebe outra na próxima visita. Mudar a distribuição no meio de um teste mistura os períodos: anote a data da mudança e compare só os dias depois dela.</p>
+    </section>
+  )
+}
+
 const PERIODOS = [['Hoje', 0, 0], ['Ontem', -1, -1], ['7 dias', -6, 0], ['30 dias', -29, 0]]
 
 export default function FunilQuiz({ usuario }) {
@@ -97,6 +156,8 @@ export default function FunilQuiz({ usuario }) {
           </button>
         )}
       </div>
+
+      <Distribuicao />
 
       {erro && <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>}
       {carregando && !dados && <p className="text-sm text-azul-700">Carregando…</p>}

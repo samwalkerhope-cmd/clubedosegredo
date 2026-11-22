@@ -906,3 +906,35 @@ begin
 end $$;
 revoke execute on function public.quiz_funil(date, date, text, text) from public, anon;
 grant execute on function public.quiz_funil(date, date, text, text) to authenticated;
+
+-- ---------------------------------------------------------------- teste da 1ª tela do quiz: distribuição entre as versões
+-- Pesos relativos de cada versão (a, b, c, d). 0 = versão desligada. O quiz lê por quiz_config() (público, só leitura);
+-- só administradoras mudam, pelo painel "Funil do quiz" do app (quiz_definir_versoes).
+create table if not exists public.quiz_config (chave text primary key, valor jsonb not null, atualizado_em timestamptz not null default now());
+alter table public.quiz_config enable row level security;
+revoke all on public.quiz_config from anon, authenticated;
+insert into public.quiz_config (chave, valor) values ('versoes', '{"a":25,"b":25,"c":25,"d":25}'::jsonb) on conflict (chave) do nothing;
+
+create or replace function public.quiz_config() returns json
+language sql stable security definer set search_path = public as $$
+  select json_build_object('versoes', coalesce((select valor from public.quiz_config where chave = 'versoes'), '{"a":25,"b":25,"c":25,"d":25}'::jsonb))
+$$;
+
+create or replace function public.quiz_definir_versoes(p_versoes jsonb) returns json
+language plpgsql security definer set search_path = public as $$
+declare v jsonb := '{}'::jsonb; k text; n int; total int := 0;
+begin
+  if not public.eh_admin() then raise exception 'sem permissão'; end if;
+  foreach k in array array['a','b','c','d'] loop
+    n := least(greatest(coalesce((p_versoes->>k)::int, 0), 0), 100);
+    v := v || jsonb_build_object(k, n); total := total + n;
+  end loop;
+  if total <= 0 then raise exception 'pelo menos uma versão precisa ficar ligada'; end if;
+  insert into public.quiz_config (chave, valor) values ('versoes', v)
+  on conflict (chave) do update set valor = excluded.valor, atualizado_em = now();
+  return public.quiz_config();
+end $$;
+revoke execute on function public.quiz_config() from public;
+grant execute on function public.quiz_config() to anon, authenticated;
+revoke execute on function public.quiz_definir_versoes(jsonb) from public, anon;
+grant execute on function public.quiz_definir_versoes(jsonb) to authenticated;

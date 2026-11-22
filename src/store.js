@@ -200,6 +200,20 @@ export async function funilQuiz(de, ate, chave = null, valor = null) {
   if (error) throw new Error(msg('Não foi possível conectar. Tente de novo.'))
   return data
 }
+// Distribuição do teste da 1ª tela do quiz (pesos de a, b, c, d; 0 = desligada). Só admin grava.
+export async function versoesQuiz() {
+  if (DEMO) return local.get('clube.quiz.versoes', { a: 25, b: 25, c: 25, d: 25 })
+  const { data, error } = await sb.rpc('quiz_config')
+  if (error) throw new Error(msg('Não foi possível conectar. Tente de novo.'))
+  return data?.versoes || { a: 25, b: 25, c: 25, d: 25 }
+}
+export async function salvarVersoesQuiz(versoes) {
+  if (DEMO) { local.set('clube.quiz.versoes', versoes); return versoes }
+  const { data, error } = await sb.rpc('quiz_definir_versoes', { p_versoes: versoes })
+  if (error) throw new Error(msg('Não foi possível conectar. Tente de novo.'))
+  return data?.versoes || versoes
+}
+
 // Modo demonstração: números inventados, só para ver o painel.
 function demoFunil(chave, valor) {
   const telas = ['home', 'age', 'body', 'areas', 'alone', 'news', 'name', 'email', 'motivation', 'attempts', 'biology', 'barriers', 'comparison', 'goals', 'bloating', 'mechanism', 'weight', 'height', 'target', 'routine', 'sleep', 'projection', 'commitment', 'firstResult', 'analysis', 'report', 'testimonials', 'generating', 'sales', 'preco', 'cta']
